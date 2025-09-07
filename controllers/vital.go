@@ -18,8 +18,10 @@ func CreateVitalController(c *fiber.Ctx) error{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
 
-	//----> Store the user blood-stat in the database.
+	//----> Store the user-id in vital.
 	vital.UserID = userId
+
+	//----> store the newly created vital in the database.
 	newVital, err := vital.CreateVital()
 
 	//----> Check for error.
@@ -49,6 +51,9 @@ func DeleteVitalByIdController(c *fiber.Ctx) error{
 func EditVitalByIdController(c *fiber.Ctx) error{
 	vital := new(models.Vital)
 
+	//----> Get the user id.
+	userId := middlewares.GetUserIdFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
@@ -56,6 +61,9 @@ func EditVitalByIdController(c *fiber.Ctx) error{
 	if err := c.BodyParser(&vital); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error(), "status": "fail"})	
 	}
+
+	//----> Store the user-id in vital.
+	vital.UserID = userId
 
 	//----> Update the blood-stat with given id from the database.
 	if err := vital.EditVitalById(id); err != nil {

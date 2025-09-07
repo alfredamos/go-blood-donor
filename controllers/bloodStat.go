@@ -18,8 +18,10 @@ func CreateBloodStatController(c *fiber.Ctx) error{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
 
-	//----> Store the user blood-stat in the database.
+	//----> Store the user-id in blood-stat.
 	bloodStat.UserID = userId
+
+	//----> Store the newly created blood stats in the database.
 	newBloodStat, err := bloodStat.CreateBloodStat()
 
 	//----> Check for error.
@@ -49,6 +51,9 @@ func DeleteBloodStatByIdController(c *fiber.Ctx) error{
 func EditBloodStatByIdController(c *fiber.Ctx) error{
 	bloodStat := new(models.BloodStat)
 
+	//----> Get the user id.
+	userId := middlewares.GetUserIdFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
@@ -56,6 +61,9 @@ func EditBloodStatByIdController(c *fiber.Ctx) error{
 	if err := c.BodyParser(&bloodStat); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error(), "status": "fail"})	
 	}
+
+	//----> Store the user-id in blood-stat.
+	bloodStat.UserID = userId
 
 	//----> Update the blood-stat with given id from the database.
 	if err := bloodStat.EditBloodStatById(id); err != nil {

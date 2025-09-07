@@ -18,8 +18,10 @@ func CreateDonorDetailController(c *fiber.Ctx) error{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
 
-	//----> Store the user blood-stat in the database.
+	//----> Store the user-id in donor-details.
 	donorDetail.UserID = userId
+
+	//----> Store the newly created donor-detail in the database.
 	newDonorDetail, err := donorDetail.CreateDonorDetail()
 
 	//----> Check for error.
@@ -49,6 +51,9 @@ func DeleteDonorDetailByIdController(c *fiber.Ctx) error{
 func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	donorDetail := new(models.DonorDetail)
 
+	//----> Get the user id.
+	userId := middlewares.GetUserIdFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
@@ -56,6 +61,9 @@ func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	if err := c.BodyParser(&donorDetail); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error(), "status": "fail"})	
 	}
+
+	//----> Store the user-id in donor-details.
+	donorDetail.UserID = userId
 
 	//----> Update the blood-stat with given id from the database.
 	if err := donorDetail.EditDonorDetailById(id); err != nil {
