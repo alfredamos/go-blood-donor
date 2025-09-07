@@ -16,20 +16,16 @@ func AllRoutes(server *fiber.App) {
 	routesProtected := server.Use(middlewares.VerifyTokenJwt)
 
 	//----> Protected routes.
-	protectedRoutes(routesProtected.Group("/api/auth"))
+	protectedRoutes(routesProtected.Group("/api"))
 
-	//----> Admin role permitted routes middleware.
+	//----> Admin routes middleware.
 	routesOfAdmin := server.Use(middlewares.VerifyTokenJwt, middlewares.RolePermission("Admin"))
 
 	//----> Admin routes
 	adminRoutes(routesOfAdmin.Group("/api"))
 
-	//----> Owner and admin routes.
-	//adminAndOwnerRoutes := server.Group("/api").Use(authenticate.VerifyTokenJwt, controllers.OwnerAndAdmin)
-	//ownerAndAdminRoutes(adminAndOwnerRoutes)
-
-	//----> Same user and admin routes.
-	//userSameAndAdminRoutes := server.Group("/api").Use(authenticate.VerifyTokenJwt, authenticate.SameUserAndAdmin)
-	//sameUserAndAdminRoutes(userSameAndAdminRoutes)
-
+	//----> Owner routes.
+	routesOfOwner := server.Use(middlewares.VerifyTokenJwt, middlewares.SameUserAndAdmin)
+	ownerRoutes(routesOfOwner.Group("/api"))
+	
 }

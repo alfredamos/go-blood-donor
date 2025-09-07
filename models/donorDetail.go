@@ -46,9 +46,9 @@ func (donorDetail *DonorDetail) CreateDonorDetail() (DonorDetail, error) {
 	return *donorDetail, nil
 }
 
-func (_ *DonorDetail) DeleteDonorDetail() error {
+func (*DonorDetail) DeleteDonorDetailById(id string) error {
 	//----> Retrieve the donor-detail.
-	if _, err := getOneDonorDetail("id"); err != nil {
+	if _, err := getOneDonorDetail(id); err != nil {
 		return errors.New("failed to get donor detail from database")
 	}
 
@@ -61,9 +61,9 @@ func (_ *DonorDetail) DeleteDonorDetail() error {
 	return nil
 }
 
-func (donorDetail *DonorDetail) EditDonorDetail() error {
+func (donorDetail *DonorDetail) EditDonorDetailById(id string) error {
 	//----> Retrieve the donor-detail.
-	if _, err := getOneDonorDetail("id"); err != nil {
+	if _, err := getOneDonorDetail(id); err != nil {
 		return errors.New("failed to get donor detail from database")
 	}
 
@@ -76,9 +76,9 @@ func (donorDetail *DonorDetail) EditDonorDetail() error {
 	return nil
 }
 
-func (_ *DonorDetail) GetDonorDetailByID() (DonorDetail, error) {
+func (*DonorDetail) GetDonorDetailByID(id string) (DonorDetail, error) {
 	//----> Retrieve the donor-detail from the database.
-	donorDetail, err := getOneDonorDetail("id")
+	donorDetail, err := getOneDonorDetail(id)
 
 	//----> Check for error.
 	if err != nil {

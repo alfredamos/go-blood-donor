@@ -16,7 +16,7 @@ type BloodStat struct {
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 	GenoType   string         `json:"genoType" binding:"required"`
 	BloodGroup string         `json:"bloodGroup" binding:"required"`
-	UserID     string         // `gorm:"foreignKey:UserID;type:varchar(255)" json:"userId" binding:"required"`
+	UserID     string         
 }
 
 // BeforeCreate These functions are called before creating any Post
@@ -25,7 +25,7 @@ func (bloodStat *BloodStat) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-func (bloodStat *BloodStat) CreateBloodStatById(id string) (BloodStat, error) {
+func (bloodStat *BloodStat) CreateBloodStat() (BloodStat, error) {
 	//----> Insert the blood-stat into the database.
 	if err := initializers.DB.Create(&bloodStat).Error; err != nil {
 		return BloodStat{}, errors.New("failed to create blood stat")

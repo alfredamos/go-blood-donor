@@ -7,6 +7,9 @@ import (
 )
 
 func adminRoutes(router fiber.Router) {
+	//----> Blood-stat routes.
+	router.Get("/blood-stats", controllers.GetAllBloodStatsController)
+
 	//----> User routes
 	router.Delete("/users/:id", controllers.DeleteUserByIdController)
 	router.Get("/users", controllers.GetAllUsersController)
