@@ -18,4 +18,7 @@ func protectedRoutes(router fiber.Router) {
 
 	//----> Donor details routes.
 	router.Post("/donor-details", controllers.CreateDonorDetailController)
+
+	//----> Vital routes.
+	router.Post("/vitals", controllers.CreateVitalController)
 }
