@@ -30,6 +30,10 @@ func (vital *Vital) BeforeCreate(_ *gorm.DB) (err error) {
 }
 
 func (vital *Vital) CreateVital() (Vital, error) {
+	//----> Calculate the body mass index.
+	bodyMassIndex := calculateBMI(vital.Weight, vital.Height)
+	vital.BMI = bodyMassIndex
+
 	//----> Insert the new vital into the database.
 	if err := initializers.DB.Create(&vital).Error; err != nil {
 		return Vital{}, errors.New("failed to create Vital")
@@ -39,7 +43,7 @@ func (vital *Vital) CreateVital() (Vital, error) {
 	return *vital, nil
 }
 
-func (_ *Vital) DeleteVitalById(id string) error {
+func (d *Vital) DeleteVitalById(id string) error {
 	//----> Retrieve the vital with the given id.
 	if _, err := getOneVital(id); err != nil {
 		return errors.New("failed to retrieve Vital from database")
@@ -60,6 +64,10 @@ func (vital *Vital) EditVitalById(id string) error {
 		return errors.New("failed to retrieve Vital from database")
 	}
 
+	//----> Calculate the body mass index.
+	bodyMassIndex := calculateBMI(vital.Weight, vital.Height)
+	vital.BMI = bodyMassIndex
+
 	//----> Update the vital with the given id
 	if err := initializers.DB.Model(&vital).Updates(&vital).Error; err != nil {
 		return errors.New("failed to update Vital")
@@ -69,7 +77,7 @@ func (vital *Vital) EditVitalById(id string) error {
 	return nil
 }
 
-func (_ *Vital) GetVitalById(id string) (Vital, error) {
+func (d *Vital) GetVitalById(id string) (Vital, error) {
 	//----> Retrieve the vital from the database.
 	vital, err := getOneVital(id)
 
@@ -83,7 +91,7 @@ func (_ *Vital) GetVitalById(id string) (Vital, error) {
 
 }
 
-func (_ *Vital) GetAllVitals() ([]Vital, error) {
+func (d *Vital) GetAllVitals() ([]Vital, error) {
 	var vitals []Vital //----> Declare a slice of vitals.
 
 	//----> Retrieve the vitals from database.
@@ -105,4 +113,8 @@ func getOneVital(id string) (Vital, error) {
 
 	//----> Send back the response.
 	return vital, nil
+}
+
+func calculateBMI(weight, height float64) float64{
+	return (weight/(height * height))
 }
