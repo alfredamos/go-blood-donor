@@ -7,10 +7,15 @@ import (
 )
 
 func ownerRoutes(router fiber.Router){
-	//----> Blood-stats routes.
-	router.Delete("/blood-stats", controllers.DeleteBloodStatController)
-	router.Get("/blood-stats/:id", controllers.GetBloodStatByIdController)
-	router.Patch("/blood-stats/:id", controllers.EditBloodStatController)
+	//----> Donor-details routes.
+	router.Delete("/donor-details", controllers.DeleteBloodStatByIdController)
+	router.Get("/donor-details/:id", controllers.GetBloodStatByIdController)
+	router.Patch("/donor-details/:id", controllers.EditBloodStatByIdController)
+
+	//----> Donor-details routes.
+	router.Delete("/donor-details", controllers.DeleteDonorDetailByIdController)
+	router.Get("/donor-details/:id", controllers.GetDonorDetailByIdController)
+	router.Patch("/donor-details/:id", controllers.EditDonorDetailByIdController)
 
 	//----> User routes.
 	router.Delete("/users/:id", controllers.DeleteUserByIdController)

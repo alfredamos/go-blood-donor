@@ -31,7 +31,7 @@ func CreateDonorDetailController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": newDonorDetail, "status": "success"})
 }
 
-func DeleteDonorDetailController(c *fiber.Ctx) error{
+func DeleteDonorDetailByIdController(c *fiber.Ctx) error{
 	donorDetail := new(models.DonorDetail)
 
 	//----> Get the id from context params.
@@ -46,7 +46,7 @@ func DeleteDonorDetailController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "DonorDetail has been deleted successfully!", "status": "success"})
 }
 
-func EditDonorDetailController(c *fiber.Ctx) error{
+func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	donorDetail := new(models.DonorDetail)
 
 	//----> Get the id from context params.

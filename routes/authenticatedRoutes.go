@@ -15,4 +15,7 @@ func protectedRoutes(router fiber.Router) {
 
 	//----> Blood-stat routes.
 	router.Post("/blood-stats", controllers.CreateBloodStatController)
+
+	//----> Donor details routes.
+	router.Post("/donor-details", controllers.CreateDonorDetailController)
 }

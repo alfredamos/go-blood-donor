@@ -31,7 +31,7 @@ func CreateBloodStatController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": newBloodStat, "status": "success"})
 }
 
-func DeleteBloodStatController(c *fiber.Ctx) error{
+func DeleteBloodStatByIdController(c *fiber.Ctx) error{
 	bloodStat := new(models.BloodStat)
 
 	//----> Get the id from context params.
@@ -46,7 +46,7 @@ func DeleteBloodStatController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "BloodStat has been deleted successfully!", "status": "success"})
 }
 
-func EditBloodStatController(c *fiber.Ctx) error{
+func EditBloodStatByIdController(c *fiber.Ctx) error{
 	bloodStat := new(models.BloodStat)
 
 	//----> Get the id from context params.
