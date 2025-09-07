@@ -38,7 +38,7 @@ func DeleteDonorDetailController(c *fiber.Ctx) error{
 	id := c.Params("id")
 
 	//----> Delete the blood-stat with given id from the database.
-	if err := donorDetail.DeleteDonorDetail(); err != nil {
+	if err := donorDetail.DeleteDonorDetailById(id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -73,7 +73,7 @@ func GetDonorDetailByIdController(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	//----> Get the blood-stat with given id from the database.
-	fetchedDonorDetail, err := donorDetail.GetDonorDetailById(id)
+	fetchedDonorDetail, err := donorDetail.GetDonorDetailByID(id)
 	
 	//----> Check for error.
 	if err != nil {
@@ -88,7 +88,7 @@ func GetAllDonorDetailsController(c *fiber.Ctx) error {
 	donorDetail := new(models.DonorDetail)
 
 	//----> Get all the blood-stats from database.
-	allDonorDetails, err := donorDetail.GetAllDonorDetail()
+	allDonorDetails, err := donorDetail.GetAllDonorDetails()
 
 	//----> Check for error.
 	if err != nil {

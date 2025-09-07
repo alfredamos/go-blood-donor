@@ -46,7 +46,7 @@ func (donorDetail *DonorDetail) CreateDonorDetail() (DonorDetail, error) {
 	return *donorDetail, nil
 }
 
-func (*DonorDetail) DeleteDonorDetailById(id string) error {
+func (d *DonorDetail) DeleteDonorDetailById(id string) error {
 	//----> Retrieve the donor-detail.
 	if _, err := getOneDonorDetail(id); err != nil {
 		return errors.New("failed to get donor detail from database")
@@ -76,7 +76,7 @@ func (donorDetail *DonorDetail) EditDonorDetailById(id string) error {
 	return nil
 }
 
-func (*DonorDetail) GetDonorDetailByID(id string) (DonorDetail, error) {
+func (d *DonorDetail) GetDonorDetailByID(id string) (DonorDetail, error) {
 	//----> Retrieve the donor-detail from the database.
 	donorDetail, err := getOneDonorDetail(id)
 
@@ -89,7 +89,7 @@ func (*DonorDetail) GetDonorDetailByID(id string) (DonorDetail, error) {
 	return donorDetail, nil
 }
 
-func (_ *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
+func (d *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
 	donors := make([]DonorDetail, 0) //----> Declare the variable.
 
 	//----> Retrieve all donor-details.
