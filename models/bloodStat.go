@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -35,10 +36,10 @@ func (bloodStat *BloodStat) CreateBloodStat() (BloodStat, error) {
 	return *bloodStat, nil
 }
 
-func (_ *BloodStat) DeleteBloodStatById(id string) error {
+func (_ *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) error {
 	//----> retrieve blood-stat and check for error.
-	if _, err := getOneBloodStat(id); err != nil {
-		return errors.New("failed to retrieve blood stat from database")
+	if _, err := getOneBloodStat(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Delete the blood-stat
@@ -50,10 +51,10 @@ func (_ *BloodStat) DeleteBloodStatById(id string) error {
 	return nil
 }
 
-func (bloodStat *BloodStat) EditBloodStatById(id string) error {
+func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth) error {
 	//----> retrieve blood-stat and check for error.
-	if _, err := getOneBloodStat(id); err != nil {
-		return errors.New("failed to retrieve blood stat from database")
+	if _, err := getOneBloodStat(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Edit the blood-stat
@@ -65,20 +66,20 @@ func (bloodStat *BloodStat) EditBloodStatById(id string) error {
 	return nil
 }
 
-func (_ *BloodStat) GetBloodStatById(id string) (BloodStat, error) {
+func (_ *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (BloodStat, error) {
 	//----> Retrieve the blood-stat from database.
-	bloodStat, err := getOneBloodStat(id)
+	bloodStat, err := getOneBloodStat(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return BloodStat{}, errors.New("failed to retrieve blood stat from database")
+		return BloodStat{}, errors.New(err.Error())
 	}
 
 	//----> send back the response.
 	return bloodStat, nil
 }
 
-func (_ *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
+func (d *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
 	var bloodStats []BloodStat //----> Declare the variable.
 
 	//----> Retrieve all the blood-stats from database.
@@ -90,7 +91,7 @@ func (_ *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
 	return bloodStats, nil
 }
 
-func getOneBloodStat(id string) (BloodStat, error) {
+func getOneBloodStat(id string, userAuth utils.UserAuth) (BloodStat, error) {
 	var bloodStat BloodStat //----> Declare the variable.
 
 	//----> Retrieve the blood stat.
@@ -98,6 +99,10 @@ func getOneBloodStat(id string) (BloodStat, error) {
 		return bloodStat, errors.New("failed to retrieve blood stat from database")
 	}
 
+	//----> Check for ownership and admin privilege.
+	if err := utils.CheckForOwnership(userAuth.UserId, bloodStat.UserID, userAuth.IsAdmin); err != nil{
+		return BloodStat{}, errors.New("you are not permitted to view or perform any action on this resource")
+	}
 	//----> Send back the response
 	return bloodStat, nil
 }

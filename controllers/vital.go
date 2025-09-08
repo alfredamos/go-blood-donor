@@ -36,11 +36,14 @@ func CreateVitalController(c *fiber.Ctx) error{
 func DeleteVitalByIdController(c *fiber.Ctx) error{
 	vital := new(models.Vital)
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
 	//----> Delete the blood-stat with given id from the database.
-	if err := vital.DeleteVitalById(id); err != nil {
+	if err := vital.DeleteVitalById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -51,8 +54,8 @@ func DeleteVitalByIdController(c *fiber.Ctx) error{
 func EditVitalByIdController(c *fiber.Ctx) error{
 	vital := new(models.Vital)
 
-	//----> Get the user id.
-	userId := middlewares.GetUserIdFromContext(c)
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
 
 	//----> Get the id from context params.
 	id := c.Params("id")
@@ -63,10 +66,10 @@ func EditVitalByIdController(c *fiber.Ctx) error{
 	}
 
 	//----> Store the user-id in vital.
-	vital.UserID = userId
+	vital.UserID = userAuth.UserId
 
 	//----> Update the blood-stat with given id from the database.
-	if err := vital.EditVitalById(id); err != nil {
+	if err := vital.EditVitalById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -77,11 +80,14 @@ func EditVitalByIdController(c *fiber.Ctx) error{
 func GetVitalByIdController(c *fiber.Ctx) error {
 	vital := new(models.Vital)
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
 	//----> Get the blood-stat with given id from the database.
-	fetchedVital, err := vital.GetVitalById(id)
+	fetchedVital, err := vital.GetVitalById(id, userAuth)
 	
 	//----> Check for error.
 	if err != nil {

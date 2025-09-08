@@ -39,8 +39,11 @@ func DeleteDonorDetailByIdController(c *fiber.Ctx) error{
 	//----> Get the id from context params.
 	id := c.Params("id")
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Delete the blood-stat with given id from the database.
-	if err := donorDetail.DeleteDonorDetailById(id); err != nil {
+	if err := donorDetail.DeleteDonorDetailById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -51,8 +54,8 @@ func DeleteDonorDetailByIdController(c *fiber.Ctx) error{
 func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	donorDetail := new(models.DonorDetail)
 
-	//----> Get the user id.
-	userId := middlewares.GetUserIdFromContext(c)
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
 
 	//----> Get the id from context params.
 	id := c.Params("id")
@@ -63,10 +66,10 @@ func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	}
 
 	//----> Store the user-id in donor-details.
-	donorDetail.UserID = userId
+	donorDetail.UserID = userAuth.UserId
 
 	//----> Update the blood-stat with given id from the database.
-	if err := donorDetail.EditDonorDetailById(id); err != nil {
+	if err := donorDetail.EditDonorDetailById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -77,11 +80,14 @@ func EditDonorDetailByIdController(c *fiber.Ctx) error{
 func GetDonorDetailByIdController(c *fiber.Ctx) error {
 	donorDetail := new(models.DonorDetail)
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Get the id from context params.
 	id := c.Params("id")
 
 	//----> Get the blood-stat with given id from the database.
-	fetchedDonorDetail, err := donorDetail.GetDonorDetailByID(id)
+	fetchedDonorDetail, err := donorDetail.GetDonorDetailByID(id, userAuth)
 	
 	//----> Check for error.
 	if err != nil {

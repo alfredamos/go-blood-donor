@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,10 +44,10 @@ func (vital *Vital) CreateVital() (Vital, error) {
 	return *vital, nil
 }
 
-func (d *Vital) DeleteVitalById(id string) error {
+func (d *Vital) DeleteVitalById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the vital with the given id.
-	if _, err := getOneVital(id); err != nil {
-		return errors.New("failed to retrieve Vital from database")
+	if _, err := getOneVital(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Delete the vital with the given id
@@ -58,10 +59,10 @@ func (d *Vital) DeleteVitalById(id string) error {
 	return nil
 }
 
-func (vital *Vital) EditVitalById(id string) error {
+func (vital *Vital) EditVitalById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the vital with the given id.
-	if _, err := getOneVital(id); err != nil {
-		return errors.New("failed to retrieve Vital from database")
+	if _, err := getOneVital(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Calculate the body mass index.
@@ -77,13 +78,13 @@ func (vital *Vital) EditVitalById(id string) error {
 	return nil
 }
 
-func (d *Vital) GetVitalById(id string) (Vital, error) {
+func (d *Vital) GetVitalById(id string, userAuth utils.UserAuth) (Vital, error) {
 	//----> Retrieve the vital from the database.
-	vital, err := getOneVital(id)
+	vital, err := getOneVital(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return Vital{}, errors.New("failed to retrieve Vital from database")
+		return Vital{}, errors.New(err.Error())
 	}
 
 	//----> send back the response.
@@ -103,12 +104,17 @@ func (d *Vital) GetAllVitals() ([]Vital, error) {
 	return vitals, nil
 }
 
-func getOneVital(id string) (Vital, error) {
+func getOneVital(id string, userAuth utils.UserAuth) (Vital, error) {
 	var vital Vital //----> Declare the variable.
 
 	//----> Retrieve the vital with given id.
 	if err := initializers.DB.First(&vital, "id = ?", id).Error; err != nil {
 		return vital, errors.New("failed to retrieve Vital from DB")
+	}
+
+	//----> Check for ownership and admin privilege.
+	if err := utils.CheckForOwnership(userAuth.UserId, vital.UserID, userAuth.IsAdmin); err != nil{
+		return Vital{}, errors.New("you are not permitted to view or perform any action on this resource")
 	}
 
 	//----> Send back the response.

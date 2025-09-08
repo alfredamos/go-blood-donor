@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,10 +47,10 @@ func (donorDetail *DonorDetail) CreateDonorDetail() (DonorDetail, error) {
 	return *donorDetail, nil
 }
 
-func (d *DonorDetail) DeleteDonorDetailById(id string) error {
+func (d *DonorDetail) DeleteDonorDetailById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the donor-detail.
-	if _, err := getOneDonorDetail(id); err != nil {
-		return errors.New("failed to get donor detail from database")
+	if _, err := getOneDonorDetail(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Delete the donor-detail from the database.
@@ -61,10 +62,10 @@ func (d *DonorDetail) DeleteDonorDetailById(id string) error {
 	return nil
 }
 
-func (donorDetail *DonorDetail) EditDonorDetailById(id string) error {
+func (donorDetail *DonorDetail) EditDonorDetailById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the donor-detail.
-	if _, err := getOneDonorDetail(id); err != nil {
-		return errors.New("failed to get donor detail from database")
+	if _, err := getOneDonorDetail(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Update the donor-detail in the database.
@@ -76,13 +77,13 @@ func (donorDetail *DonorDetail) EditDonorDetailById(id string) error {
 	return nil
 }
 
-func (d *DonorDetail) GetDonorDetailByID(id string) (DonorDetail, error) {
+func (d *DonorDetail) GetDonorDetailByID(id string, userAuth utils.UserAuth) (DonorDetail, error) {
 	//----> Retrieve the donor-detail from the database.
-	donorDetail, err := getOneDonorDetail(id)
+	donorDetail, err := getOneDonorDetail(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return DonorDetail{}, errors.New("failed to get donor detail from database")
+		return DonorDetail{}, errors.New(err.Error())
 	}
 
 	//----> send back the response.
@@ -101,12 +102,17 @@ func (d *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
 	return donors, nil
 }
 
-func getOneDonorDetail(id string) (DonorDetail, error) {
+func getOneDonorDetail(id string, userAuth utils.UserAuth) (DonorDetail, error) {
 	var donorDetail DonorDetail //----> Declare the variable.
 
 	//----> Retrieve the donor-detail with the given id from database.
 	if err := initializers.DB.Where("id = ?", id).First(&donorDetail).Error; err != nil {
 		return DonorDetail{}, errors.New("failed to get donor detail from database")
+	}
+
+	//----> Check for ownership and admin privilege.
+	if err := utils.CheckForOwnership(userAuth.UserId, donorDetail.UserID, userAuth.IsAdmin); err != nil{
+		return DonorDetail{}, errors.New("you are not permitted to view or perform any action on this resource")
 	}
 
 	//----> Send back the response.

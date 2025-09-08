@@ -2,13 +2,16 @@ package utils
 
 import "errors"
 
-func CheckForOwnership(userIdFromContext, userIdFromResource string) error {
-	//----> Is not same user.
-	if isEqual := isSameUser(userIdFromContext, userIdFromResource); !isEqual {
+func CheckForOwnership(userIdFromContext, userIdFromResource string, isAdmin bool) error {
+	//----> Get same user flag.
+	isEqual := isSameUser(userIdFromContext, userIdFromResource)
+	
+	//----> Check for same user and admin privilege.
+	if !isEqual && !isAdmin {
 		return errors.New("you are not allowed to view or delete this resource")
 	}
 
-	//----> Is not same user.
+	//----> Either is same user or admin.
 	return nil
 }
 
