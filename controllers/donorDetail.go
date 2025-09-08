@@ -107,3 +107,5 @@ func GetAllDonorDetailsController(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": allDonorDetails, "status": "success"})
 }
 
+
+

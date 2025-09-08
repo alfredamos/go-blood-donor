@@ -17,7 +17,5 @@ func adminRoutes(router fiber.Router) {
 	router.Get("/vitals", controllers.GetAllVitalsController)
 
 	//----> User routes
-	router.Delete("/users/:id", controllers.DeleteUserByIdController)
 	router.Get("/users", controllers.GetAllUsersController)
-	router.Get("/users/:id", controllers.GetUserByIdController)
 }
