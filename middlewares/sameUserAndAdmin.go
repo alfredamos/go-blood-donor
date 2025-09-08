@@ -10,13 +10,13 @@ func SameUserAndAdmin(c *fiber.Ctx) error{
 	userIdFromContext := c.Params("userId")
 
 	//----> Get user role from context.
-	_, userId, isAdmin := GetUserAuthFromContext(c)
+	userAuth := GetUserAuthFromContext(c)
 
 	//----> Check for same user.
-	isUserSame := IsSameUser(userId, userIdFromContext)
+	isUserSame := IsSameUser(userAuth.UserId, userIdFromContext)
 
 	//----> Check for same user and admin privilege.
-	if !isUserSame && !isAdmin {
+	if !isUserSame && !userAuth.IsAdmin {
 		//----> Invalid user.
 		return c.Status(http.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "You are not permitted to access this page!", "statusCode": http.StatusForbidden})
 	}

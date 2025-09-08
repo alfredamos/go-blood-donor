@@ -10,10 +10,10 @@ import (
 func RolePermission(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		//----> Get user role from context.
-		role, _, _ := GetUserAuthFromContext(c)
+		userAuth := GetUserAuthFromContext(c)
 
 		//----> Check for role in roles slice.
-		if isValidRole := utils.Contains(roles, role); !isValidRole {
+		if isValidRole := utils.Contains(roles, userAuth.Role); !isValidRole {
 			//----> Invalid role.
 			return c.Status(http.StatusForbidden).JSON(fiber.Map{"status": "fail", "message": "You are not permitted to access this page!", "statusCode": http.StatusForbidden})
 		}

@@ -39,6 +39,9 @@ func DeleteBloodStatByIdController(c *fiber.Ctx) error{
 	//----> Get the id from context params.
 	id := c.Params("id")
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Delete the blood-stat with given id from the database.
 	if err := bloodStat.DeleteBloodStatById(id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})

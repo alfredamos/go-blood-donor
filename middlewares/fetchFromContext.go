@@ -2,22 +2,24 @@ package middlewares
 
 import (
 	"fmt"
+	"go-donor-list-backend/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetUserAuthFromContext(c *fiber.Ctx) (string, string, bool) {
+
+func GetUserAuthFromContext(c *fiber.Ctx) utils.UserAuth{
 	//----> Get user role from context.
-	role := c.Locals("role")
+	role := fmt.Sprintf("%v", c.Locals("role"))
 
 	//----> Get the user-id from context.
-	userId := c.Locals("userId")
+	userId := fmt.Sprintf("%v", c.Locals("userId"))
 
 	//----> Check for admin role.
-	isAdmin := fmt.Sprintf("%v", role) == "Admin"
+	isAdmin := role == "Admin"
 
 	//----> Send back the role.
-	return fmt.Sprintf("%v", role), fmt.Sprintf("%v", userId), isAdmin
+	return utils.UserAuth{IsAdmin: isAdmin, UserId: userId, Role: role}
 
 }
 
