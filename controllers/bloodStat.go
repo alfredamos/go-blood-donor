@@ -8,7 +8,7 @@ import (
 )
 
 func CreateBloodStatController(c *fiber.Ctx) error{
-	bloodStat := new(models.BloodStat)
+	bloodStat := new(models.BloodStatCreateRequest)
 
 	//----> Get the user id.
 	userId := middlewares.GetUserIdFromContext(c)

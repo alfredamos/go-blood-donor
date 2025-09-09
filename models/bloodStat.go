@@ -3,12 +3,26 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+type BloodStatCreateRequest struct {
+	GenoType   string         `json:"genoType" binding:"required"`
+	BloodGroup string         `json:"bloodGroup" binding:"required"`
+	UserID     string 				`json:"userId" binding:"required"`
+}
+
+type BloodStatUpdateRequest struct {
+	ID 				 string         `json:"id"`
+	GenoType   string         `json:"genoType" binding:"required"`
+	BloodGroup string         `json:"bloodGroup" binding:"required"`
+	UserID     string 				`json:"userId" binding:"required"`
+}
 
 type BloodStat struct {
 	ID         string `gorm:"primaryKey;type:varchar(255)" json:"id"`
@@ -26,14 +40,18 @@ func (bloodStat *BloodStat) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-func (bloodStat *BloodStat) CreateBloodStat() (BloodStat, error) {
+func (req *BloodStatCreateRequest) CreateBloodStat() (responses.BloodStatResponse, error) {
+	//----> Map BloodStatCreateRequest to BloodStat 
+		bloodStat := bloodStatCreateRequestToEntity(req)
 	//----> Insert the blood-stat into the database.
 	if err := initializers.DB.Create(&bloodStat).Error; err != nil {
-		return BloodStat{}, errors.New("failed to create blood stat")
+		return responses.BloodStatResponse{}, errors.New("failed to create blood stat")
 	}
 
+	//----> Map BloodStat to BloodStatResponse
+	bloodStatResponse := bloodStateEntityToResponse(bloodStat)
 	//----> Send back the response.
-	return *bloodStat, nil
+	return bloodStatResponse, nil
 }
 
 func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) error {
@@ -50,6 +68,7 @@ func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) erro
 	//----> Send back the response.
 	return nil
 }
+
 func (bloodStat *BloodStat) DeleteBloodStatByUserId(userId string) error {
 	//----> retrieve blood-stat and check for error.
 	if err := initializers.DB.Where("userId = ?", userId).First(&bloodStat).Error; err != nil {
@@ -162,4 +181,29 @@ func getAllBloodStatIds(bloodStats []BloodStat) []BloodStat {
 
 	//----> send back the result
 	return bloodStatIds
+}
+
+func bloodStatCreateRequestToEntity(req *BloodStatCreateRequest)BloodStat{
+	return BloodStat{
+		GenoType: req.GenoType,
+		BloodGroup: req.BloodGroup,
+		UserID: req.UserID,
+	}
+}
+func bloodStatUpdateRequestToEntity(req *BloodStatUpdateRequest)BloodStat{
+	return BloodStat{
+		ID: req.ID,
+		GenoType: req.GenoType,
+		BloodGroup: req.BloodGroup,
+		UserID: req.UserID,
+	}
+}
+
+func bloodStateEntityToResponse(res BloodStat)responses.BloodStatResponse{
+	return responses.BloodStatResponse{
+		ID: res.ID,
+		BloodGroup: res.BloodGroup,
+		GenoType: res.GenoType,
+		UserID: res.UserID,
+	}
 }
