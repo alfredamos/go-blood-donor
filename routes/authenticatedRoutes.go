@@ -25,6 +25,10 @@ func protectedRoutes(router fiber.Router) {
 	router.Get("/donor-details/:id", controllers.GetDonorDetailByIdController)
 	router.Patch("/donor-details/:id", controllers.EditDonorDetailByIdController)
 
+	//----> User routes.
+	router.Delete("/users/:id", controllers.DeleteUserByIdController)
+	router.Get("/users/:id", controllers.GetUserByIdController)
+
 	//----> Vital routes.
 	router.Post("/vitals", controllers.CreateVitalController)
 	router.Delete("/vitals/:id", controllers.DeleteVitalByIdController)

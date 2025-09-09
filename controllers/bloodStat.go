@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/models"
 
