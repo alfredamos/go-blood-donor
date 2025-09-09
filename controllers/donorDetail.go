@@ -51,6 +51,32 @@ func DeleteDonorDetailByIdController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "DonorDetail has been deleted successfully!", "status": "success"})
 }
 
+func DeleteAllDonorsController(c *fiber.Ctx) error {
+	donorDetail := new(models.DonorDetail)
+
+	//----> Delete all donor-details.
+	if err := donorDetail.DeleteAllDonorDetails(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Donor-details deleted successfully!", "status": "success"})
+}
+func DeleteAllDonorsByUserIdController(c *fiber.Ctx) error {
+	donorDetail := new(models.DonorDetail)
+
+	//----> Get the user-id from params.
+	userId := c.Params("userId")
+
+	//----> Delete all donor-details.
+	if err := donorDetail.DeleteAllDonorDetailsByUserId(userId); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Donor-details deleted successfully!", "status": "success"})
+}
+
 func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	donorDetail := new(models.DonorDetail)
 

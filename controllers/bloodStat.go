@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/models"
 
@@ -49,6 +50,32 @@ func DeleteBloodStatByIdController(c *fiber.Ctx) error{
 
 	//----> Send back the response.
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "BloodStat has been deleted successfully!", "status": "success"})
+}
+
+func DeleteBloodStatByUserIdController(c *fiber.Ctx) error{
+	bloodStat := new(models.BloodStat)
+	//----> Get the id from context params.
+	userId := c.Params("userId")
+
+	//----> Delete the blood-stat with given id from the database.
+	if err := bloodStat.DeleteBloodStatByUserId(userId); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "BloodStat has been deleted successfully!", "status": "success"})
+}
+
+func DeleteAllBloodStatController(c *fiber.Ctx) error {
+	bloodStat := new(models.BloodStat)
+
+	//----> Delete all the blood-stats.
+	if err := bloodStat.DeleteAllBloodStat(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "All blood-stats have been deleted successfully!", "status": "success"})
 }
 
 func EditBloodStatByIdController(c *fiber.Ctx) error{

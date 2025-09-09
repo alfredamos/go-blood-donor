@@ -50,8 +50,7 @@ func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) erro
 	//----> Send back the response.
 	return nil
 }
-func (b *BloodStat) DeleteBloodStatByUserId(userId string) error {
-	bloodStat := new(BloodStat)
+func (bloodStat *BloodStat) DeleteBloodStatByUserId(userId string) error {
 	//----> retrieve blood-stat and check for error.
 	if err := initializers.DB.Where("userId = ?", userId).First(&bloodStat).Error; err != nil {
 		return errors.New(err.Error())
@@ -63,6 +62,25 @@ func (b *BloodStat) DeleteBloodStatByUserId(userId string) error {
 	}
 
 	//----> Send back the response.
+	return nil
+}
+
+func (bloodStat *BloodStat) DeleteAllBloodStat() error {
+	bloodStats := new([]BloodStat)
+	//----> Retrieve all the bloodStats
+	if err := initializers.DB.Find(&bloodStat); err != nil {
+		return errors.New("blood-stats cannot be retrieved from database")
+	}
+
+	//----> Get all the blood-stat ids
+	bloodStatIds := getAllBloodStatIds(*bloodStats)
+
+	//---> Delete all the blood-stats.
+	if err := initializers.DB.Delete(&bloodStatIds); err != nil {
+		return errors.New("blood-stats cannot be deleted")
+	}
+
+	//----> Send back response.
 	return nil
 }
 
@@ -130,4 +148,18 @@ func getOneBloodStat(id string, userAuth utils.UserAuth) (BloodStat, error) {
 	}
 	//----> Send back the response
 	return bloodStat, nil
+}
+
+func getAllBloodStatIds(bloodStats []BloodStat) []BloodStat {
+	bloodStatIds := []BloodStat{}
+
+	//----> Collect all the blood-stat ids.
+	for _, bloodStat := range bloodStats{
+		bloodStat := BloodStat{ID: bloodStat.ID}
+
+		bloodStatIds = append(bloodStatIds, bloodStat)
+	}
+
+	//----> send back the result
+	return bloodStatIds
 }

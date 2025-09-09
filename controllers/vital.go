@@ -51,6 +51,32 @@ func DeleteVitalByIdController(c *fiber.Ctx) error{
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Vital has been deleted successfully!", "status": "success"})
 }
 
+func DeleteAllVitals(c *fiber.Ctx) error{
+	vital := new(models.Vital)
+
+	//----> Delete all vitals from the database.
+	if err := vital.DeleteAllVitals(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "All vitals have been deleted successfully!", "status": "success"})
+}
+func DeleteAllVitalsByUserId(c *fiber.Ctx) error{
+	vital := new(models.Vital)
+	
+	//----> Get user-id from params.
+	userId := c.Params("userId")
+
+	//----> Delete all vitals from the database.
+	if err := vital.DeleteAllVitalsByUserId(userId); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "All vitals have been deleted successfully!", "status": "success"})
+}
+
 func EditVitalByIdController(c *fiber.Ctx) error{
 	vital := new(models.Vital)
 
