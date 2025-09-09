@@ -113,5 +113,23 @@ func GetAllDonorDetailsController(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": allDonorDetails, "status": "success"})
 }
 
+func GetAllDonorDetailsByUserIdController(c *fiber.Ctx)error {
+	donorDetail := new(models.DonorDetail)
+
+	//----> Get the user-id from params.
+	userId := c.Params("userId")
+
+	//----> Retrieve all the donor-details associated with this user-id
+	donorDetails, err := donorDetail.GetAllDonorDetailsByUserId(userId)
+
+	//----> Check for error.
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return  c.Status(fiber.StatusOK).JSON(fiber.Map{"message": donorDetails, "status": "success"})
+}
+
 
 

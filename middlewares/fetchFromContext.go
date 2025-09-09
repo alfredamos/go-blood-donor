@@ -14,8 +14,7 @@ func GetUserAuthFromContext(c *fiber.Ctx) utils.UserAuth{
 
 	//----> Get the user-id from context.
 	userId := fmt.Sprintf("%v", c.Locals("userId"))
-
-	//----> Check for admin role.
+	
 	isAdmin := role == "Admin"
 
 	//----> Send back the role.

@@ -54,7 +54,7 @@ func (d *DonorDetail) DeleteDonorDetailById(id string, userAuth utils.UserAuth) 
 	}
 
 	//----> Delete the donor-detail from the database.
-	if err := initializers.DB.Delete(&DonorDetail{}).Error; err != nil {
+	if err := initializers.DB.Where("id = ?", id).Delete(&DonorDetail{}).Error; err != nil {
 		return errors.New("failed to delete donor detail from database")
 	}
 
@@ -100,6 +100,18 @@ func (d *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
 
 	//----> Send back the response.
 	return donors, nil
+}
+
+func (d *DonorDetail) GetAllDonorDetailsByUserId(userId string) ([]DonorDetail, error){
+	donorDetails := new([]DonorDetail)
+
+	//----> Get all donor-details by user-id.
+	if err := initializers.DB.Preload("User").Find(&donorDetails, DonorDetail{UserID: userId}); err != nil{
+		return []DonorDetail{}, errors.New("donor-details cannot be retrieved from database")
+	}
+
+	//----> send back the response.
+	return *donorDetails, nil
 }
 
 func getOneDonorDetail(id string, userAuth utils.UserAuth) (DonorDetail, error) {

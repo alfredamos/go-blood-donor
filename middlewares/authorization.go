@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +12,7 @@ func RolePermission(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		//----> Get user role from context.
 		userAuth := GetUserAuthFromContext(c)
-
+		fmt.Println("In role permission isAdmin : ", userAuth.IsAdmin)
 		//----> Check for role in roles slice.
 		if isValidRole := utils.Contains(roles, userAuth.Role); !isValidRole {
 			//----> Invalid role.

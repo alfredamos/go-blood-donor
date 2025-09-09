@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/utils"
 	"time"
 
 	"github.com/google/uuid"
@@ -50,14 +51,14 @@ func (user *User) BeforeCreate(_ *gorm.DB) (err error) {
 	return
 }
 
-func (_ *User) DeleteUserById(id string) error {
+func (d *User) DeleteUserById(id string, userAuth utils.UserAuth) error {
 	//----> Check for existence of user.
-	if _, err := getOneUser(id); err != nil {
-		return errors.New("failed to retrieve user from database")
+	if _, err := getOneUser(id, userAuth); err != nil {
+		return errors.New(err.Error())
 	}
 
 	//----> Delete the user.
-	if err := initializers.DB.Delete(&User{}).Error; err != nil {
+	if err := initializers.DB.Where("id = ?", id).Delete(&User{}).Error; err != nil {
 		return errors.New("failed to delete user")
 	}
 
@@ -66,20 +67,20 @@ func (_ *User) DeleteUserById(id string) error {
 
 }
 
-func (_ *User) GetUserById(id string) (User, error) {
+func (d *User) GetUserById(id string, userAuth utils.UserAuth) (User, error) {
 	//----> Retrieve the user from database.
-	user, err := getOneUser(id)
+	user, err := getOneUser(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return User{}, errors.New("failed to retrieve user from database")
+		return User{}, errors.New(err.Error())
 	}
 
 	//----> Send back the response.
 	return user, nil
 }
 
-func (_ *User) GetAllUsers() ([]User, error) {
+func (d *User) GetAllUsers() ([]User, error) {
 	var users []User //----> Declare the variable.
 
 	//----> Retrieve the users from the database.
@@ -92,12 +93,17 @@ func (_ *User) GetAllUsers() ([]User, error) {
 
 }
 
-func getOneUser(id string) (User, error) {
+func getOneUser(id string, userAuth utils.UserAuth) (User, error) {
 	user := User{} //----> User variable.
 
 	//----> Retrieve the user with the given id from the database.
 	if err := initializers.DB.First(&user, "id = ?", id).Error; err != nil {
 		return User{}, errors.New("failed to find user with id " + id + " in database")
+	}
+
+	//----> Check for ownership and admin privilege.
+	if err := utils.CheckForOwnership(userAuth.UserId, user.ID, userAuth.IsAdmin); err != nil{
+		return User{}, errors.New("you are not permitted to view or perform any action on this resource")
 	}
 
 	//----> Send back the response.

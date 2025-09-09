@@ -90,7 +90,7 @@ func (req *EditProfileRequest) EditProfile() error {
 	//----> Update the user in the database.
 	updatedUser := editProfileRequestToUser(req)
 	fmt.Print("Edited user, updatedUser : ", updatedUser)
-	if err := initializers.DB.Model(&user).Updates(&updatedUser).Error; err != nil {
+	if err := initializers.DB.Model(&user).Updates(updatedUser).Error; err != nil {
 		return errors.New("invalid credentials ")
 	}
 
@@ -220,6 +220,7 @@ func editProfileRequestToUser(req *EditProfileRequest) User {
 		Gender:      req.Gender,
 		DateOfBirth: req.DateOfBirth,
 		Age:         calculateAge(req.DateOfBirth),
+		//Role:        req.Role,
 	}
 }
 

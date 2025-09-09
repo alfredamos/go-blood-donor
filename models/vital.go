@@ -51,7 +51,7 @@ func (d *Vital) DeleteVitalById(id string, userAuth utils.UserAuth) error {
 	}
 
 	//----> Delete the vital with the given id
-	if err := initializers.DB.Delete(&Vital{}, "id = ?", id).Error; err != nil {
+	if err := initializers.DB.Where("id = ?", id).Delete(&Vital{}, "id = ?", id).Error; err != nil {
 		return errors.New("failed to delete Vital")
 	}
 
@@ -70,7 +70,7 @@ func (vital *Vital) EditVitalById(id string, userAuth utils.UserAuth) error {
 	vital.BMI = bodyMassIndex
 
 	//----> Update the vital with the given id
-	if err := initializers.DB.Model(&vital).Updates(&vital).Error; err != nil {
+	if err := initializers.DB.Model(&vital).Updates(vital).Error; err != nil {
 		return errors.New("failed to update Vital")
 	}
 
@@ -102,6 +102,18 @@ func (d *Vital) GetAllVitals() ([]Vital, error) {
 
 	//----> Send back the response.
 	return vitals, nil
+}
+
+func (v *Vital) GetAllVitalsByUserId(userId string)([]Vital, error){
+	vitals := new([]Vital)
+
+	//----> Retrieve all vitals by user-id.
+	if err := initializers.DB.Preload("User").Find(&vitals, Vital{UserID: userId}); err != nil {
+		return []Vital{}, errors.New("vitals for this user cannot be retrieved")
+	}
+
+	//---> Send back the response
+	return *vitals, nil
 }
 
 func getOneVital(id string, userAuth utils.UserAuth) (Vital, error) {

@@ -98,6 +98,24 @@ func GetBloodStatByIdController(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": fetchedBloodStat, "status": "success"})
 }
 
+func GetBloodStatByUserIdController(c *fiber.Ctx) error{
+	bloodStat := new(models.BloodStat)
+
+	//----> Get the user-id from params.
+	userId := c.Params("userId")
+
+	//----> Retrieve the blood-stat associated with this user.
+	userBloodStat, err := bloodStat.GetBloodStatByUserId(userId)
+	
+	//----> Check for error.
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
+	}
+
+	//----> Send back the response.
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": userBloodStat, "status": "success"})
+}
+
 func GetAllBloodStatsController(c *fiber.Ctx) error {
 	bloodStat := new(models.BloodStat)
 

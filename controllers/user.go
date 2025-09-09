@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/models"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,11 +10,14 @@ import (
 func DeleteUserByIdController(c *fiber.Ctx) error{
 	user := new(models.User)
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Get the id of user from params.
 	id := c.Params("id")
 
 	//----> Get the user with the given id from database.
-	if err := user.DeleteUserById(id); err !=nil {
+	if err := user.DeleteUserById(id, userAuth); err !=nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
@@ -35,11 +39,14 @@ func GetAllUsersController(c *fiber.Ctx) error{
 func GetUserByIdController(c *fiber.Ctx) error{
 	user := new(models.User)
 
+	//----> Get the user-auth.
+	userAuth := middlewares.GetUserAuthFromContext(c)
+
 	//----> Get the id of user from params.
 	id := c.Params("id")
 
 	//----> Get the user with the given id from database.
-	fetchedUser, err := user.GetUserById(id)
+	fetchedUser, err := user.GetUserById(id, userAuth)
 	if err !=nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}

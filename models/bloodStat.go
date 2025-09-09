@@ -36,14 +36,14 @@ func (bloodStat *BloodStat) CreateBloodStat() (BloodStat, error) {
 	return *bloodStat, nil
 }
 
-func (_ *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) error {
+func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) error {
 	//----> retrieve blood-stat and check for error.
 	if _, err := getOneBloodStat(id, userAuth); err != nil {
 		return errors.New(err.Error())
 	}
 
 	//----> Delete the blood-stat
-	if err := initializers.DB.Delete(&BloodStat{}, "id = ?", id).Error; err != nil {
+	if err := initializers.DB.Where("id = ?", id).Delete(&BloodStat{}, "id = ?", id).Error; err != nil {
 		return errors.New("failed to delete blood stat from database")
 	}
 
@@ -58,7 +58,7 @@ func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth
 	}
 
 	//----> Edit the blood-stat
-	if err := initializers.DB.Model(&bloodStat).Updates(&bloodStat).Error; err != nil {
+	if err := initializers.DB.Model(&bloodStat).Updates(bloodStat).Error; err != nil {
 		return errors.New("failed to update blood stat from database")
 	}
 
@@ -66,7 +66,7 @@ func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth
 	return nil
 }
 
-func (_ *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (BloodStat, error) {
+func (b *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (BloodStat, error) {
 	//----> Retrieve the blood-stat from database.
 	bloodStat, err := getOneBloodStat(id, userAuth)
 
@@ -79,7 +79,17 @@ func (_ *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (BloodS
 	return bloodStat, nil
 }
 
-func (d *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
+func (bloodStat *BloodStat) GetBloodStatByUserId(userId string) (BloodStat, error){
+	//----> Retrieve the blood-stat by user-id.
+	if err := initializers.DB.First(&bloodStat, BloodStat{UserID: userId}); err != nil {
+		return BloodStat{}, errors.New("the blood-stat for this user cannot be retrieved")
+	}
+
+	//----> Send back the response
+	return *bloodStat, nil
+}
+
+func (b *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
 	var bloodStats []BloodStat //----> Declare the variable.
 
 	//----> Retrieve all the blood-stats from database.
