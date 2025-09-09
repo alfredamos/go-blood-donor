@@ -50,6 +50,21 @@ func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) erro
 	//----> Send back the response.
 	return nil
 }
+func (b *BloodStat) DeleteBloodStatByUserId(userId string) error {
+	bloodStat := new(BloodStat)
+	//----> retrieve blood-stat and check for error.
+	if err := initializers.DB.Where("userId = ?", userId).First(&bloodStat).Error; err != nil {
+		return errors.New(err.Error())
+	}
+
+	//----> Delete the blood-stat
+	if err := initializers.DB.Where("userId = ?", userId).Delete(&BloodStat{}, "userId = ?", userId).Error; err != nil {
+		return errors.New("failed to delete blood stat from database")
+	}
+
+	//----> Send back the response.
+	return nil
+}
 
 func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth) error {
 	//----> retrieve blood-stat and check for error.

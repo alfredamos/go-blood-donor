@@ -62,6 +62,43 @@ func (d *DonorDetail) DeleteDonorDetailById(id string, userAuth utils.UserAuth) 
 	return nil
 }
 
+func (donorDetail *DonorDetail) DeleteAllDonorDetails() error{
+	donorDetails := new([]DonorDetail)
+
+	//----> Get all the donorDetails
+	if err := initializers.DB.Find(&donorDetail).Error; err != nil {
+		return errors.New("donor-details are not found in the database")
+	}
+
+	//----> Get all the ids of donor-details to delete
+	donorDetailsIds := getIdsOfDonorDetailsToDelete(*donorDetails)
+	
+	//----> Delete all the donor-details with all the ids.
+	if err := initializers.DB.Delete(&donorDetailsIds).Error; err != nil {
+		return errors.New("donor-details cannot be deleted from the database")
+	}
+
+	return nil
+}
+func (donorDetail *DonorDetail) DeleteAllDonorDetailsByUserId(userId string) error{
+	donorDetails := new([]DonorDetail)
+
+	//----> Get all the donorDetails
+	if err := getManyDonorDetailByUserId(userId, *donorDetails); err != nil {
+		return errors.New("donor-details are not found in the database")
+	}
+
+	//----> Get all the ids of donor-details to delete
+	donorDetailsIds := getIdsOfDonorDetailsToDelete(*donorDetails)
+	
+	//----> Delete all the donor-details with all the ids.
+	if err := initializers.DB.Delete(&donorDetailsIds).Error; err != nil {
+		return errors.New("donor-details cannot be deleted from the database")
+	}
+
+	return nil
+}
+
 func (donorDetail *DonorDetail) EditDonorDetailById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the donor-detail.
 	if _, err := getOneDonorDetail(id, userAuth); err != nil {
@@ -106,7 +143,8 @@ func (d *DonorDetail) GetAllDonorDetailsByUserId(userId string) ([]DonorDetail, 
 	donorDetails := new([]DonorDetail)
 
 	//----> Get all donor-details by user-id.
-	if err := initializers.DB.Preload("User").Find(&donorDetails, DonorDetail{UserID: userId}); err != nil{
+	if err := getManyDonorDetailByUserId(userId, *donorDetails); err != nil{
+
 		return []DonorDetail{}, errors.New("donor-details cannot be retrieved from database")
 	}
 
@@ -129,4 +167,27 @@ func getOneDonorDetail(id string, userAuth utils.UserAuth) (DonorDetail, error) 
 
 	//----> Send back the response.
 	return donorDetail, nil
+}
+
+func getManyDonorDetailByUserId(userId string, donorDetails []DonorDetail)(error){
+	//----> Get all donor-details by user-id.
+	if err := initializers.DB.Preload("User").Find(&donorDetails, DonorDetail{UserID: userId}).Error; err != nil{
+		return errors.New("donor-details cannot be retrieved from database")
+	}
+
+	//----> Send back the response.
+	return nil
+}
+
+func getIdsOfDonorDetailsToDelete(donorDetails []DonorDetail)([]DonorDetail){
+	donorDetailsIds := []DonorDetail{}
+
+	//----> Collect all the donor-detail ids into a slice.
+	for _, donorDetail := range donorDetails{
+		donorDetailId := DonorDetail{ID: donorDetail.ID}
+		donorDetailsIds = append(donorDetailsIds, donorDetailId)
+	}
+
+	//----> Send back the results.
+	return donorDetailsIds
 }

@@ -44,7 +44,7 @@ func (vital *Vital) CreateVital() (Vital, error) {
 	return *vital, nil
 }
 
-func (d *Vital) DeleteVitalById(id string, userAuth utils.UserAuth) error {
+func (v *Vital) DeleteVitalById(id string, userAuth utils.UserAuth) error {
 	//----> Retrieve the vital with the given id.
 	if _, err := getOneVital(id, userAuth); err != nil {
 		return errors.New(err.Error())
@@ -56,6 +56,45 @@ func (d *Vital) DeleteVitalById(id string, userAuth utils.UserAuth) error {
 	}
 
 	//----> Send back the response.
+	return nil
+}
+
+func (v *Vital) DeleteAllVitals()error{
+	vitals := new([]Vital)
+
+	//----> Retrieve the vitals from database.
+	if err := initializers.DB.Find(&vitals).Error; err != nil {
+		return errors.New("failed to retrieve Vital from database")
+	}
+
+	//----> Get all the ids of vitals to delete.
+	idsOfVitalsToDelete := getIdsOfVitalsToDelete(*vitals)
+
+	//----> Delete all the vitals.
+	if err := initializers.DB.Delete(&idsOfVitalsToDelete); err != nil {
+		return errors.New("vitals cannot be deleted from database")
+	}
+
+	//----> Send back the result.
+	return nil
+}
+func (v *Vital) DeleteAllVitalsByUserId(userId string)error{
+	vitals := new([]Vital)
+
+	//----> Retrieve the vitals from database.
+	if err := getManyVitalsByUserId(userId, *vitals); err != nil {
+		return errors.New("failed to retrieve Vital from database")
+	}
+
+	//----> Get all the ids of vitals to delete.
+	idsOfVitalsToDelete := getIdsOfVitalsToDelete(*vitals)
+
+	//----> Delete all the vitals.
+	if err := initializers.DB.Delete(&idsOfVitalsToDelete); err != nil {
+		return errors.New("vitals cannot be deleted from database")
+	}
+
+	//----> Send back the result.
 	return nil
 }
 
@@ -108,7 +147,7 @@ func (v *Vital) GetAllVitalsByUserId(userId string)([]Vital, error){
 	vitals := new([]Vital)
 
 	//----> Retrieve all vitals by user-id.
-	if err := initializers.DB.Preload("User").Find(&vitals, Vital{UserID: userId}); err != nil {
+	if err := getManyVitalsByUserId(userId, *vitals); err != nil {
 		return []Vital{}, errors.New("vitals for this user cannot be retrieved")
 	}
 
@@ -131,6 +170,29 @@ func getOneVital(id string, userAuth utils.UserAuth) (Vital, error) {
 
 	//----> Send back the response.
 	return vital, nil
+}
+
+func getManyVitalsByUserId(userId string, vitals []Vital) error{
+	//----> Retrieve all vitals by user-id.
+	if err := initializers.DB.Preload("User").Find(&vitals, Vital{UserID: userId}); err != nil {
+		return errors.New("vitals for this user cannot be retrieved")
+	}
+
+	//----> Send back the result.
+	return nil
+}
+
+func getIdsOfVitalsToDelete(vitals []Vital)[]Vital {
+	idsOfVitalsToDelete := []Vital{} 
+
+	//----> Collect all the ids of vital to delete
+	for _, vital := range vitals {
+		idOfVital := Vital{ID: vital.ID}
+		idsOfVitalsToDelete = append(idsOfVitalsToDelete, idOfVital)
+	}
+
+	//----> Send back the result.
+	return idsOfVitalsToDelete
 }
 
 func calculateBMI(weight, height float64) float64{
