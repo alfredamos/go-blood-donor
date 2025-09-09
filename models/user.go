@@ -5,24 +5,8 @@ import (
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/utils"
 	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-)
-
-type Gender string
-
-const (
-	Female Gender = "Female"
-	Male   Gender = "Male"
-)
-
-type Role string
-
-const (
-	Admin    Role = "Admin"
-	Customer Role = "User"
-	Staff    Role = "Staff"
 )
 
 type User struct {
@@ -31,15 +15,15 @@ type User struct {
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 	Name         string         `json:"name" binding:"required"`
-	Address      Address        `json:"address" gorm:"embedded"`
+	Address      utils.Address        `json:"address" gorm:"embedded"`
 	Email        string         `json:"email" binding:"required" gorm:"unique"`
 	Image        string         `json:"image" binding:"required"`
 	Phone        string         `json:"phone" binding:"required"`
 	Password     string         `json:"-" binding:"required"`
-	Gender       Gender         `json:"gender" gorm:"default:Male"`
+	Gender       utils.Gender   `json:"gender" gorm:"default:Male"`
 	DateOfBirth  time.Time      `json:"dateOfBirth" binding:"required"`
 	Age          int            `json:"age"`
-	Role         Role           `json:"role" gorm:"default:'Customer'"`
+	Role         utils.Role     `json:"role" gorm:"default:'Customer'"`
 	Vitals       []Vital        `json:"vitals" gorm:"foreignKey:UserID"`
 	DonorDetails []DonorDetail  `json:"donorDetails" gorm:"foreignKey:UserID"`
 	BloodStat    BloodStat      `json:"bloodStat" gorm:"foreignKey:UserID"`

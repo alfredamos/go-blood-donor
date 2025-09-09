@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"fmt"
+	"go-donor-list-backend/utils"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/middlewares"
 	_ "net/http"
@@ -60,14 +61,14 @@ func (req *ChangePasswordRequest) ChangePassword() error {
 
 type EditProfileRequest struct {
 	Name        string    `json:"name" binding:"required"`
-	Address     Address   `json:"address" gorm:"embedded"`
+	Address     utils.Address   `json:"address" gorm:"embedded"`
 	Email       string    `json:"email" binding:"required"`
 	Image       string    `json:"image" binding:"required"`
 	Phone       string    `json:"phone" binding:"required"`
-	Gender      Gender    `json:"gender" binding:"required"`
+	Gender      utils.Gender    `json:"gender" binding:"required"`
 	DateOfBirth time.Time `json:"dateOfBirth" binding:"required"`
 	Age         int       `json:"age"`
-	Role        Role      `json:"role" gorm:"default:'Customer'"`
+	Role        utils.Role      `json:"role" gorm:"default:'Customer'"`
 	Password    string    `json:"password" binding:"required"`
 }
 
@@ -133,11 +134,11 @@ func (req *LoginRequest) Login() (string, error) {
 
 type SignupRequest struct {
 	Name            string    `json:"name" binding:"required"`
-	Address         Address   `json:"address" gorm:"embedded"`
+	Address         utils.Address   `json:"address" gorm:"embedded"`
 	Email           string    `json:"email" binding:"required"`
 	Phone           string    `json:"phone" binding:"required"`
 	Image           string    `json:"image" binding:"required"`
-	Gender          Gender    `json:"gender" binding:"required"`
+	Gender          utils.Gender    `json:"gender" binding:"required"`
 	DateOfBirth     time.Time `json:"dateOfBirth" binding:"required"`
 	Age             int       `json:"age"`
 	Password        string    `json:"password" binding:"required"`
@@ -207,7 +208,7 @@ func signupRequestToUser(req *SignupRequest, hashedPassword string) User {
 		Gender:      req.Gender,
 		DateOfBirth: req.DateOfBirth,
 		Age:         calculateAge(req.DateOfBirth),
-		Role:        Customer,
+		Role:        utils.Role(utils.Customer),
 	}
 }
 

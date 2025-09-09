@@ -1,4 +1,4 @@
-package models
+package utils
 
 type Address struct {
 	Street  string `json:"street" binding:"required"`

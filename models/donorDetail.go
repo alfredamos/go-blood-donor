@@ -5,20 +5,9 @@ import (
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/utils"
 	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-type DonorType string
-
-const (
-	FirstTimeDonor DonorType = "FirstTimeDonor"
-	FrequentDonor  DonorType = "FrequentDonor"
-	OneOfDonor     DonorType = "OneOfDonor"
-)
-
-const ()
 
 type DonorDetail struct {
 	ID                string `gorm:"primaryKey;type:varchar(255)" json:"id"`
@@ -27,7 +16,7 @@ type DonorDetail struct {
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
 	VolumePerDonation float64        `json:"volume_per_donation" binding:"required"`
 	NumberOfDonations int            `json:"numberOfTimes" binding:"required"`
-	Type              DonorType      `json:"type" binding:"required"`
+	Type              utils.DonorType      `json:"type" binding:"required"`
 	UserID            string         `gorm:"foreignKey:UserID;type:varchar(255)" json:"userId" binding:"required"`
 }
 

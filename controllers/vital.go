@@ -17,7 +17,7 @@ func CreateVitalController(c *fiber.Ctx) error{
 	if err := c.BodyParser(&vital); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
-
+	
 	//----> Store the user-id in vital.
 	vital.UserID = userId
 
