@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/models"
 
@@ -88,7 +87,6 @@ func LoginController(c *fiber.Ctx) error {
 }
 
 func LogoutController(c *fiber.Ctx) error {
-	fmt.Println("At point 1 in logout-controller")
 	//----> Remove the cookie.
 	middlewares.DeleteCookieHandler(c)
 

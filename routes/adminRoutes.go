@@ -1,14 +1,12 @@
 package routes
 
 import (
-	"fmt"
 	"go-donor-list-backend/controllers"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func adminRoutes(router fiber.Router) {
-	fmt.Println("In admin routes")
 	//----> Blood-stat routes.
 	router.Get("/blood-stats", controllers.GetAllBloodStatsController)
 	router.Delete("/blood-stats/all/delete-all", controllers.DeleteAllBloodStatController)

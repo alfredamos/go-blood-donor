@@ -1,14 +1,12 @@
 package routes
 
 import (
-	"fmt"
 	"go-donor-list-backend/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func AllRoutes(server *fiber.App) {
-	fmt.Println("In all-routes")
 	//----> Unprotected routes.
 	unAuthenticatedRoutes := server.Group("/api")
 

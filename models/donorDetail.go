@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
@@ -45,11 +44,8 @@ func (donorDetail *DonorDetail) BeforeCreate(_ *gorm.DB) (err error) {
 }
 
 func (req *DonorDetailCreateRequest) CreateDonorDetail() (responses.DonorDetailResponse, error) {
-	fmt.Println("In create-donor-detail, requestPayload : ", req)
 	//----> Map donorDetailCreate to DonorDetail
 	donorDetail := donorDetailCreateRequestToEntity(req)
-
-	fmt.Println("In create-donor-detail, entity : ", donorDetail)
 
 	//----> Insert the donor-detail into the database.
 	if err := initializers.DB.Create(&donorDetail).Error; err != nil {

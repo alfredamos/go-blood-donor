@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
@@ -141,7 +140,7 @@ func (b *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (respon
 
 func (b *BloodStat) GetBloodStatByUserId(userId string)(responses.BloodStatResponse, error){
 	var bloodStat BloodStat //----> Declare the variable.
-	fmt.Println("Are you in the right-place?")
+	
 	//----> Retrieve the blood stat.
 	if err := initializers.DB.Where(&BloodStat{UserID: userId}).First(&bloodStat).Error; err != nil {
 		return responses.BloodStatResponse{}, errors.New(err.Error())
@@ -199,14 +198,11 @@ func getManyBloodStatByUserId(userId string, bloodStats []BloodStat)(error){
 
 
 func getAllBloodStatIds(bloodStats []BloodStat) []BloodStat {
-	fmt.Println("$$$$$$$, in get ids &&&&&, bloodStats : ", bloodStats)
 	bloodStatIds := []BloodStat{}
 
 	//----> Collect all the blood-stat ids.
 	for _, bloodStat := range bloodStats{
 		bloodStat := BloodStat{ID: bloodStat.ID}
-
-		fmt.Println("bloodStat, in loop, : ", bloodStat)
 
 		bloodStatIds = append(bloodStatIds, bloodStat)
 	}

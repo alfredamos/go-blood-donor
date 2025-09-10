@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"go-donor-list-backend/utils"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/middlewares"
@@ -90,7 +89,7 @@ func (req *EditProfileRequest) EditProfile() error {
 
 	//----> Update the user in the database.
 	updatedUser := editProfileRequestToUser(req)
-	fmt.Print("Edited user, updatedUser : ", updatedUser)
+	
 	if err := initializers.DB.Model(&user).Updates(updatedUser).Error; err != nil {
 		return errors.New("invalid credentials ")
 	}
@@ -156,7 +155,6 @@ func (user *User) GetCurrentUser(email string) (User, error) {
 }
 
 func (req *SignupRequest) Signup() error {
-	fmt.Println("NewUser : ", req)
 	email := req.Email
 	confirmPassword := req.ConfirmPassword
 	password := req.Password

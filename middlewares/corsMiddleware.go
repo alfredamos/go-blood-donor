@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -28,10 +27,6 @@ func CorsMiddleware() fiber.Handler {
 			//----> If the origin is allowed, set CORS headers in the response
 			setCorsHeaders(c, origin)
 		}
-
-		fmt.Println("origin : ", origin)
-
-		fmt.Println("isOriginAllowed : ", isOriginAllowed)
 
 		//----> Handle preflight OPTIONS requests by aborting with status 204
 		if c.Method() == "OPTIONS" {

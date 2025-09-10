@@ -71,7 +71,6 @@ type jToken *jwt.Token
 
 func validateToken(token string) (jToken, error) {
 	secretKey := os.Getenv("JWT_TOKEN_SECRET")
-	fmt.Println("In validateToken, secretKey : ", secretKey)
 	//----> Parse token.
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)

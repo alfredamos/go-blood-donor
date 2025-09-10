@@ -1,14 +1,12 @@
 package routes
 
 import (
-	"fmt"
 	"go-donor-list-backend/controllers"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func protectedRoutes(router fiber.Router) {
-	fmt.Println("In protected-routes")
 	//----> Auth routes.
 	router.Get("/auth/me", controllers.GetCurrentUserController)
 	router.Patch("/auth/change-password", controllers.ChangePasswordController)
