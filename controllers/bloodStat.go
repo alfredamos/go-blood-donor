@@ -78,7 +78,7 @@ func DeleteAllBloodStatController(c *fiber.Ctx) error {
 }
 
 func EditBloodStatByIdController(c *fiber.Ctx) error{
-	bloodStat := new(models.BloodStat)
+	bloodStat := new(models.BloodStatUpdateRequest)
 
 	//----> Get the user-auth.
 	userAuth := middlewares.GetUserAuthFromContext(c)
@@ -100,7 +100,7 @@ func EditBloodStatByIdController(c *fiber.Ctx) error{
 	}
 
 	//----> Send back the response.
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "BloodStat has been deleted successfully!", "status": "success"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "BloodStat has been updated successfully!", "status": "success"})
 }
 
 func GetBloodStatByIdController(c *fiber.Ctx) error {
@@ -124,14 +124,14 @@ func GetBloodStatByIdController(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": fetchedBloodStat, "status": "success"})
 }
 
-func GetBloodStatByUserIdController(c *fiber.Ctx) error{
+func GetBloodStatByUserIdController(c *fiber.Ctx) error {
 	bloodStat := new(models.BloodStat)
 
-	//----> Get the user-id from params.
+	//----> Get the id from context params.
 	userId := c.Params("userId")
 
-	//----> Retrieve the blood-stat associated with this user.
-	userBloodStat, err := bloodStat.GetBloodStatByUserId(userId)
+	//----> Get the blood-stat with given id from the database.
+	fetchedBloodStat, err := bloodStat.GetBloodStatByUserId(userId)
 	
 	//----> Check for error.
 	if err != nil {
@@ -139,7 +139,7 @@ func GetBloodStatByUserIdController(c *fiber.Ctx) error{
 	}
 
 	//----> Send back the response.
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": userBloodStat, "status": "success"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": fetchedBloodStat, "status": "success"})
 }
 
 func GetAllBloodStatsController(c *fiber.Ctx) error {

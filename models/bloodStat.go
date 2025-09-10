@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
@@ -70,13 +71,14 @@ func (b *BloodStat) DeleteBloodStatById(id string, userAuth utils.UserAuth) erro
 }
 
 func (bloodStat *BloodStat) DeleteBloodStatByUserId(userId string) error {
+	bloodStats := new([]BloodStat)
 	//----> retrieve blood-stat and check for error.
-	if err := initializers.DB.Where("userId = ?", userId).First(&bloodStat).Error; err != nil {
+	if err := initializers.DB.Find(&bloodStats, BloodStat{UserID: userId}).Error; err != nil {
 		return errors.New(err.Error())
 	}
-
+	
 	//----> Delete the blood-stat
-	if err := initializers.DB.Where("userId = ?", userId).Delete(&BloodStat{}, "userId = ?", userId).Error; err != nil {
+	if err := initializers.DB.Where(&BloodStat{UserID: userId}).Delete(&BloodStat{}).Error; err != nil {
 		return errors.New("failed to delete blood stat from database")
 	}
 
@@ -85,29 +87,33 @@ func (bloodStat *BloodStat) DeleteBloodStatByUserId(userId string) error {
 }
 
 func (bloodStat *BloodStat) DeleteAllBloodStat() error {
-	bloodStats := new([]BloodStat)
-	//----> Retrieve all the bloodStats
-	if err := initializers.DB.Find(&bloodStat); err != nil {
-		return errors.New("blood-stats cannot be retrieved from database")
+	bloodStats := new([]BloodStat) //----> Declare the variable.
+
+	//----> Retrieve all the blood-stats from database.
+	if err := initializers.DB.Find(&bloodStats).Error; err != nil {
+		return errors.New("failed to retrieve blood stats")
 	}
 
-	//----> Get all the blood-stat ids
-	bloodStatIds := getAllBloodStatIds(*bloodStats)
-
-	//---> Delete all the blood-stats.
-	if err := initializers.DB.Delete(&bloodStatIds); err != nil {
-		return errors.New("blood-stats cannot be deleted")
-	}
+	//----> Collect all the ids of blood-stats to delete.
+	idsOfBloodStat := getAllBloodStatIds(*bloodStats)
+	
+	//----> Delete all blood-stats.
+	 if err := initializers.DB.Unscoped().Delete(idsOfBloodStat).Error; err != nil {
+		return errors.New("error deleting blood-stats from database")
+	 }
 
 	//----> Send back response.
 	return nil
 }
 
-func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth) error {
+func (req *BloodStatUpdateRequest) EditBloodStatById(id string, userAuth utils.UserAuth) error {
 	//----> retrieve blood-stat and check for error.
 	if _, err := getOneBloodStat(id, userAuth); err != nil {
 		return errors.New(err.Error())
 	}
+
+	//----> Map bloodStatUpdate to bloodStat
+	bloodStat := bloodStatUpdateRequestToEntity(req)
 
 	//----> Edit the blood-stat
 	if err := initializers.DB.Model(&bloodStat).Updates(bloodStat).Error; err != nil {
@@ -118,39 +124,51 @@ func (bloodStat *BloodStat) EditBloodStatById(id string, userAuth utils.UserAuth
 	return nil
 }
 
-func (b *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (BloodStat, error) {
+func (b *BloodStat) GetBloodStatById(id string, userAuth utils.UserAuth) (responses.BloodStatResponse, error) {
 	//----> Retrieve the blood-stat from database.
 	bloodStat, err := getOneBloodStat(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return BloodStat{}, errors.New(err.Error())
+		return responses.BloodStatResponse{}, errors.New(err.Error())
 	}
-
+	
+	//----> Map bloodStat to bloodStatResponse.
+	bloodStatResponse := bloodStateEntityToResponse(bloodStat)
 	//----> send back the response.
-	return bloodStat, nil
+	return bloodStatResponse, nil
 }
 
-func (bloodStat *BloodStat) GetBloodStatByUserId(userId string) (BloodStat, error){
-	//----> Retrieve the blood-stat by user-id.
-	if err := initializers.DB.First(&bloodStat, BloodStat{UserID: userId}); err != nil {
-		return BloodStat{}, errors.New("the blood-stat for this user cannot be retrieved")
+func (b *BloodStat) GetBloodStatByUserId(userId string)(responses.BloodStatResponse, error){
+	var bloodStat BloodStat //----> Declare the variable.
+	fmt.Println("Are you in the right-place?")
+	//----> Retrieve the blood stat.
+	if err := initializers.DB.Where(&BloodStat{UserID: userId}).First(&bloodStat).Error; err != nil {
+		return responses.BloodStatResponse{}, errors.New(err.Error())
 	}
 
-	//----> Send back the response
-	return *bloodStat, nil
+	//----> Map bloodStat to BloodStatResponse
+	bloodStatResponse := bloodStateEntityToResponse(bloodStat)
+
+	//----> Send back response.
+	return bloodStatResponse, nil
+
 }
 
-func (b *BloodStat) GetAllBloodStat() ([]BloodStat, error) {
-	var bloodStats []BloodStat //----> Declare the variable.
+
+func (b *BloodStat) GetAllBloodStat() ([]responses.BloodStatResponse, error) {
+	bloodStats := []BloodStat{} //----> Declare the variable.
 
 	//----> Retrieve all the blood-stats from database.
 	if err := initializers.DB.Find(&bloodStats).Error; err != nil {
-		return []BloodStat{}, errors.New("failed to retrieve blood stats")
+		return []responses.BloodStatResponse{}, errors.New("failed to retrieve blood stats")
 	}
 
+	//----> Map slice of bloodStat to bloodStatResponse
+	bloodStatsResponse := bloodStatListEntityToListResponse(bloodStats)
+
 	//----> Send back the response.
-	return bloodStats, nil
+	return bloodStatsResponse, nil
 }
 
 func getOneBloodStat(id string, userAuth utils.UserAuth) (BloodStat, error) {
@@ -169,12 +187,26 @@ func getOneBloodStat(id string, userAuth utils.UserAuth) (BloodStat, error) {
 	return bloodStat, nil
 }
 
+func getManyBloodStatByUserId(userId string, bloodStats []BloodStat)(error){
+	//----> Get all donor-details by user-id.
+	if err := initializers.DB.Preload("User").Find(&bloodStats, BloodStat{UserID: userId}).Error; err != nil{
+		return errors.New("donor-details cannot be retrieved from database")
+	}
+
+	//----> Send back the response.
+	return nil
+}
+
+
 func getAllBloodStatIds(bloodStats []BloodStat) []BloodStat {
+	fmt.Println("$$$$$$$, in get ids &&&&&, bloodStats : ", bloodStats)
 	bloodStatIds := []BloodStat{}
 
 	//----> Collect all the blood-stat ids.
 	for _, bloodStat := range bloodStats{
 		bloodStat := BloodStat{ID: bloodStat.ID}
+
+		fmt.Println("bloodStat, in loop, : ", bloodStat)
 
 		bloodStatIds = append(bloodStatIds, bloodStat)
 	}
@@ -206,4 +238,14 @@ func bloodStateEntityToResponse(res BloodStat)responses.BloodStatResponse{
 		GenoType: res.GenoType,
 		UserID: res.UserID,
 	}
+}
+
+func bloodStatListEntityToListResponse(list []BloodStat)[]responses.BloodStatResponse {
+	listResponse := []responses.BloodStatResponse{}
+
+	for _, res := range list {
+		listResponse = append(listResponse, bloodStateEntityToResponse(res))
+	}
+
+	return listResponse
 }

@@ -3,8 +3,10 @@ package models
 import (
 	"errors"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
 	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -26,7 +28,7 @@ type User struct {
 	Role         utils.Role     `json:"role" gorm:"default:'Customer'"`
 	Vitals       []Vital        `json:"vitals" gorm:"foreignKey:UserID"`
 	DonorDetails []DonorDetail  `json:"donorDetails" gorm:"foreignKey:UserID"`
-	BloodStat    BloodStat      `json:"bloodStat" gorm:"foreignKey:UserID"`
+	BloodStat    BloodStat      `json:"bloodStat" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 // BeforeCreate These functions are called before creating any Post
@@ -51,29 +53,35 @@ func (d *User) DeleteUserById(id string, userAuth utils.UserAuth) error {
 
 }
 
-func (d *User) GetUserById(id string, userAuth utils.UserAuth) (User, error) {
+func (d *User) GetUserById(id string, userAuth utils.UserAuth) (responses.UserResponse, error) {
 	//----> Retrieve the user from database.
 	user, err := getOneUser(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return User{}, errors.New(err.Error())
+		return responses.UserResponse{}, errors.New(err.Error())
 	}
 
+	//----> Map user to userResponse
+	userResponse := userEntityToResponse(user)
+
 	//----> Send back the response.
-	return user, nil
+	return userResponse, nil
 }
 
-func (d *User) GetAllUsers() ([]User, error) {
+func (d *User) GetAllUsers() ([]responses.UserResponse, error) {
 	var users []User //----> Declare the variable.
 
 	//----> Retrieve the users from the database.
 	if err := initializers.DB.Find(&users).Error; err != nil {
-		return users, errors.New("failed to retrieve users from database")
+		return []responses.UserResponse{}, errors.New("failed to retrieve users from database")
 	}
 
+	//----> Map users to usersResponse
+	usersResponse := userListEntityToListResponse(users)
+
 	//----> Send back the response.
-	return users, nil
+	return usersResponse, nil
 
 }
 
@@ -92,4 +100,29 @@ func getOneUser(id string, userAuth utils.UserAuth) (User, error) {
 
 	//----> Send back the response.
 	return user, nil
+}
+
+func userEntityToResponse(res User)responses.UserResponse{
+	return responses.UserResponse{
+		ID: res.ID,
+	  Name        : res.Name,
+	  Address     : res.Address,
+	  Email       : res.Email,
+	  Image       : res.Image, 
+	  Phone       : res.Phone,
+	  Gender      : res.Gender,
+	  DateOfBirth : res.DateOfBirth,
+	  Age         : res.Age,
+	  Role        : res.Role,
+	}
+}
+
+func userListEntityToListResponse(list []User)[]responses.UserResponse {
+	listResponse := []responses.UserResponse{}
+
+	for _, res := range list {
+		listResponse = append(listResponse, userEntityToResponse(res))
+	}
+
+	return listResponse
 }

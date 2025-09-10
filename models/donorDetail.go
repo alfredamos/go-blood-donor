@@ -2,20 +2,38 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"go-donor-list-backend/initializers"
+	"go-donor-list-backend/responses"
 	"go-donor-list-backend/utils"
 	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+type DonorDetailCreateRequest struct{
+	VolumePerDonation float64        `json:"volumePerDonation" binding:"required"`
+	NumberOfDonations int            `json:"numberOfDonations" binding:"required"`
+	Type              utils.DonorType      `json:"type" binding:"required"`
+	UserID            string         `gorm:"foreignKey:UserID;type:varchar(255)" json:"userId" binding:"required"`
+}
+
+type DonorDetailUpdateRequest struct{
+	ID								string				 `json:"id"`
+	VolumePerDonation float64        `json:"volumePerDonation" binding:"required"`
+	NumberOfDonations int            `json:"numberOfDonations" binding:"required"`
+	Type              utils.DonorType      `json:"type" binding:"required"`
+	UserID            string         `gorm:"foreignKey:UserID;type:varchar(255)" json:"userId" binding:"required"`
+}
 
 type DonorDetail struct {
 	ID                string `gorm:"primaryKey;type:varchar(255)" json:"id"`
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
-	VolumePerDonation float64        `json:"volume_per_donation" binding:"required"`
-	NumberOfDonations int            `json:"numberOfTimes" binding:"required"`
+	VolumePerDonation float64        `json:"volumePerDonation" binding:"required"`
+	NumberOfDonations int            `json:"numberOfDonations" binding:"required"`
 	Type              utils.DonorType      `json:"type" binding:"required"`
 	UserID            string         `gorm:"foreignKey:UserID;type:varchar(255)" json:"userId" binding:"required"`
 }
@@ -26,14 +44,23 @@ func (donorDetail *DonorDetail) BeforeCreate(_ *gorm.DB) (err error) {
 	return
 }
 
-func (donorDetail *DonorDetail) CreateDonorDetail() (DonorDetail, error) {
+func (req *DonorDetailCreateRequest) CreateDonorDetail() (responses.DonorDetailResponse, error) {
+	fmt.Println("In create-donor-detail, requestPayload : ", req)
+	//----> Map donorDetailCreate to DonorDetail
+	donorDetail := donorDetailCreateRequestToEntity(req)
+
+	fmt.Println("In create-donor-detail, entity : ", donorDetail)
+
 	//----> Insert the donor-detail into the database.
-	if err := initializers.DB.Create(donorDetail).Error; err != nil {
-		return DonorDetail{}, errors.New("failed to create donor detail from database")
+	if err := initializers.DB.Create(&donorDetail).Error; err != nil {
+		return responses.DonorDetailResponse{}, errors.New("failed to create donor detail from database")
 	}
 
+	//----> Map donorDetail to donorDetailResponse
+	donorDetailResponse := donorDetailEntityToResponse(donorDetail)
+
 	//----> send back the response.
-	return *donorDetail, nil
+	return donorDetailResponse, nil
 }
 
 func (d *DonorDetail) DeleteDonorDetailById(id string, userAuth utils.UserAuth) error {
@@ -52,43 +79,45 @@ func (d *DonorDetail) DeleteDonorDetailById(id string, userAuth utils.UserAuth) 
 }
 
 func (donorDetail *DonorDetail) DeleteAllDonorDetails() error{
-	donorDetails := new([]DonorDetail)
+	donorDetails := new([]DonorDetail) //----> Declare the variable.
 
-	//----> Get all the donorDetails
-	if err := initializers.DB.Find(&donorDetail).Error; err != nil {
-		return errors.New("donor-details are not found in the database")
+	//----> Retrieve all the blood-stats from database.
+	if err := initializers.DB.Find(&donorDetails).Error; err != nil {
+		return errors.New("failed to retrieve blood stats")
 	}
 
-	//----> Get all the ids of donor-details to delete
-	donorDetailsIds := getIdsOfDonorDetailsToDelete(*donorDetails)
+	//----> Collect all the ids of blood-stats to delete.
+	idsOfDonorDetail := getAllDonorDetailIds(*donorDetails)
 	
-	//----> Delete all the donor-details with all the ids.
-	if err := initializers.DB.Delete(&donorDetailsIds).Error; err != nil {
-		return errors.New("donor-details cannot be deleted from the database")
-	}
+	//----> Delete all blood-stats.
+	 if err := initializers.DB.Unscoped().Delete(idsOfDonorDetail).Error; err != nil {
+		return errors.New("error deleting blood-stats from database")
+	 }
 
+	//----> Send back response.
 	return nil
 }
+
 func (donorDetail *DonorDetail) DeleteAllDonorDetailsByUserId(userId string) error{
 	donorDetails := new([]DonorDetail)
-
-	//----> Get all the donorDetails
-	if err := getManyDonorDetailByUserId(userId, *donorDetails); err != nil {
-		return errors.New("donor-details are not found in the database")
+	//----> retrieve blood-stat and check for error.
+	if err := initializers.DB.Find(&donorDetails, DonorDetail{UserID: userId}).Error; err != nil {
+		return errors.New(err.Error())
 	}
-
-	//----> Get all the ids of donor-details to delete
-	donorDetailsIds := getIdsOfDonorDetailsToDelete(*donorDetails)
 	
-	//----> Delete all the donor-details with all the ids.
-	if err := initializers.DB.Delete(&donorDetailsIds).Error; err != nil {
-		return errors.New("donor-details cannot be deleted from the database")
+	//----> Delete the blood-stat
+	if err := initializers.DB.Where(&DonorDetail{UserID: userId}).Delete(&DonorDetail{}).Error; err != nil {
+		return errors.New("failed to delete blood stat from database")
 	}
 
+	//----> Send back the response.
 	return nil
 }
 
-func (donorDetail *DonorDetail) EditDonorDetailById(id string, userAuth utils.UserAuth) error {
+func (req *DonorDetailUpdateRequest) EditDonorDetailById(id string, userAuth utils.UserAuth) error {
+	//----> Map donorDetail to donorDetailUpdateRequest
+	donorDetail := donorDetailUpdateRequestToEntity(req)
+
 	//----> Retrieve the donor-detail.
 	if _, err := getOneDonorDetail(id, userAuth); err != nil {
 		return errors.New(err.Error())
@@ -103,20 +132,23 @@ func (donorDetail *DonorDetail) EditDonorDetailById(id string, userAuth utils.Us
 	return nil
 }
 
-func (d *DonorDetail) GetDonorDetailByID(id string, userAuth utils.UserAuth) (DonorDetail, error) {
+func (d *DonorDetail) GetDonorDetailByID(id string, userAuth utils.UserAuth) (responses.DonorDetailResponse, error) {
 	//----> Retrieve the donor-detail from the database.
 	donorDetail, err := getOneDonorDetail(id, userAuth)
 
 	//----> Check for error.
 	if err != nil {
-		return DonorDetail{}, errors.New(err.Error())
+		return responses.DonorDetailResponse{}, errors.New(err.Error())
 	}
 
+	//----> Map donorDetail to donorDetailResponse.
+	donorDetailResponse := donorDetailEntityToResponse(donorDetail)
+
 	//----> send back the response.
-	return donorDetail, nil
+	return donorDetailResponse, nil
 }
 
-func (d *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
+func (d *DonorDetail) GetAllDonorDetails() ([]responses.DonorDetailResponse, error) {
 	donors := make([]DonorDetail, 0) //----> Declare the variable.
 
 	//----> Retrieve all donor-details.
@@ -124,21 +156,26 @@ func (d *DonorDetail) GetAllDonorDetails() ([]DonorDetail, error) {
 		return nil, errors.New("failed to get donor detail from database")
 	}
 
+	//----> Map donors to donorsResponse.
+	donorsResponse := donorDetailListEntityToListResponse(donors)
+
 	//----> Send back the response.
-	return donors, nil
+	return donorsResponse, nil
 }
 
-func (d *DonorDetail) GetAllDonorDetailsByUserId(userId string) ([]DonorDetail, error){
+func (d *DonorDetail) GetAllDonorDetailsByUserId(userId string) ([]responses.DonorDetailResponse, error){
 	donorDetails := new([]DonorDetail)
-
-	//----> Get all donor-details by user-id.
-	if err := getManyDonorDetailByUserId(userId, *donorDetails); err != nil{
-
-		return []DonorDetail{}, errors.New("donor-details cannot be retrieved from database")
+	//----> retrieve blood-stat and check for error.
+	if err := initializers.DB.Find(&donorDetails, DonorDetail{UserID: userId}).Error; err != nil {
+		return []responses.DonorDetailResponse{},errors.New(err.Error())
 	}
 
-	//----> send back the response.
-	return *donorDetails, nil
+	//----> map slice list to vitaResponse slice
+	donorDetailsResponse := donorDetailListEntityToListResponse(*donorDetails)
+
+
+	//---> Send back the response
+	return donorDetailsResponse, nil
 }
 
 func getOneDonorDetail(id string, userAuth utils.UserAuth) (DonorDetail, error) {
@@ -160,7 +197,7 @@ func getOneDonorDetail(id string, userAuth utils.UserAuth) (DonorDetail, error) 
 
 func getManyDonorDetailByUserId(userId string, donorDetails []DonorDetail)(error){
 	//----> Get all donor-details by user-id.
-	if err := initializers.DB.Preload("User").Find(&donorDetails, DonorDetail{UserID: userId}).Error; err != nil{
+	if err := initializers.DB.Where(&DonorDetail{UserID: userId}).Preload("User").Find(&donorDetails).Error; err != nil{
 		return errors.New("donor-details cannot be retrieved from database")
 	}
 
@@ -168,15 +205,55 @@ func getManyDonorDetailByUserId(userId string, donorDetails []DonorDetail)(error
 	return nil
 }
 
-func getIdsOfDonorDetailsToDelete(donorDetails []DonorDetail)([]DonorDetail){
-	donorDetailsIds := []DonorDetail{}
+func getAllDonorDetailIds(donorDetails []DonorDetail) []DonorDetail {
+	donorDetailIds := []DonorDetail{}
 
-	//----> Collect all the donor-detail ids into a slice.
+	//----> Collect all the blood-stat ids.
 	for _, donorDetail := range donorDetails{
-		donorDetailId := DonorDetail{ID: donorDetail.ID}
-		donorDetailsIds = append(donorDetailsIds, donorDetailId)
+		donorDetail := DonorDetail{ID: donorDetail.ID}
+
+		donorDetailIds = append(donorDetailIds, donorDetail)
 	}
 
-	//----> Send back the results.
-	return donorDetailsIds
+	//----> send back the result
+	return donorDetailIds
 }
+
+func donorDetailCreateRequestToEntity(req *DonorDetailCreateRequest)DonorDetail{
+	return DonorDetail{
+		VolumePerDonation: req.VolumePerDonation,
+		NumberOfDonations: req.NumberOfDonations,
+		Type: req.Type,
+		UserID: req.UserID,
+	}
+}
+func donorDetailUpdateRequestToEntity(req *DonorDetailUpdateRequest)DonorDetail{
+	return DonorDetail{
+		ID: req.ID,
+		VolumePerDonation: req.VolumePerDonation,
+		NumberOfDonations: req.NumberOfDonations,
+		Type: req.Type,
+		UserID: req.UserID,
+	}
+}
+
+func donorDetailEntityToResponse(res DonorDetail)responses.DonorDetailResponse{
+	return responses.DonorDetailResponse{
+		ID: res.ID,
+		VolumePerDonation: res.VolumePerDonation,
+		NumberOfDonations: res.NumberOfDonations,
+		Type: res.Type,
+		UserID: res.UserID,
+	}
+}
+
+func donorDetailListEntityToListResponse(list []DonorDetail)[]responses.DonorDetailResponse {
+	listResponse := []responses.DonorDetailResponse{}
+
+	for _, res := range list {
+		listResponse = append(listResponse, donorDetailEntityToResponse(res))
+	}
+
+	return listResponse
+}
+

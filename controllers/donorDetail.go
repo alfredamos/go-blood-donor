@@ -8,21 +8,21 @@ import (
 )
 
 func CreateDonorDetailController(c *fiber.Ctx) error{
-	donorDetail := new(models.DonorDetail)
+	donorDetailRequest := new(models.DonorDetailCreateRequest)
 
 	//----> Get the user id.
 	userId := middlewares.GetUserIdFromContext(c)
 
 	//----> Get the donorDetail payload from context.
-	if err := c.BodyParser(&donorDetail); err != nil {
+	if err := c.BodyParser(&donorDetailRequest); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
 
 	//----> Store the user-id in donor-details.
-	donorDetail.UserID = userId
+	donorDetailRequest.UserID = userId
 
 	//----> Store the newly created donor-detail in the database.
-	newDonorDetail, err := donorDetail.CreateDonorDetail()
+	newDonorDetail, err := donorDetailRequest.CreateDonorDetail()
 
 	//----> Check for error.
 	if err != nil {
@@ -78,7 +78,7 @@ func DeleteAllDonorsByUserIdController(c *fiber.Ctx) error {
 }
 
 func EditDonorDetailByIdController(c *fiber.Ctx) error{
-	donorDetail := new(models.DonorDetail)
+	donorDetailUpdate := new(models.DonorDetailUpdateRequest)
 
 	//----> Get the user-auth.
 	userAuth := middlewares.GetUserAuthFromContext(c)
@@ -87,20 +87,20 @@ func EditDonorDetailByIdController(c *fiber.Ctx) error{
 	id := c.Params("id")
 
 	//----> Get the edited blood-stat payload from the context.
-	if err := c.BodyParser(&donorDetail); err != nil {
+	if err := c.BodyParser(&donorDetailUpdate); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error(), "status": "fail"})	
 	}
 
 	//----> Store the user-id in donor-details.
-	donorDetail.UserID = userAuth.UserId
+	donorDetailUpdate.UserID = userAuth.UserId
 
 	//----> Update the blood-stat with given id from the database.
-	if err := donorDetail.EditDonorDetailById(id, userAuth); err != nil {
+	if err := donorDetailUpdate.EditDonorDetailById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
 	//----> Send back the response.
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "DonorDetail has been deleted successfully!", "status": "success"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "DonorDetail has been updated successfully!", "status": "success"})
 }
 
 func GetDonorDetailByIdController(c *fiber.Ctx) error {
@@ -119,7 +119,7 @@ func GetDonorDetailByIdController(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
-
+	
 	//----> Send back the response.
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": fetchedDonorDetail, "status": "success"})
 }

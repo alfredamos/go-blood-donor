@@ -8,21 +8,21 @@ import (
 )
 
 func CreateVitalController(c *fiber.Ctx) error{
-	vital := new(models.Vital)
+	vitalCreateRequest := new(models.VitalCreateRequest)
 
 	//----> Get the user id.
 	userId := middlewares.GetUserIdFromContext(c)
 
 	//----> Get the vital payload from context.
-	if err := c.BodyParser(&vital); err != nil {
+	if err := c.BodyParser(&vitalCreateRequest); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Please provide all values!", "status": "fail"})
 	}
 	
 	//----> Store the user-id in vital.
-	vital.UserID = userId
+	vitalCreateRequest.UserID = userId
 
 	//----> store the newly created vital in the database.
-	newVital, err := vital.CreateVital()
+	newVital, err := vitalCreateRequest.CreateVital()
 
 	//----> Check for error.
 	if err != nil {
@@ -78,7 +78,7 @@ func DeleteAllVitalsByUserIdController(c *fiber.Ctx) error{
 }
 
 func EditVitalByIdController(c *fiber.Ctx) error{
-	vital := new(models.Vital)
+	vitalUpdateRequest := new(models.VitalUpdateRequest)
 
 	//----> Get the user-auth.
 	userAuth := middlewares.GetUserAuthFromContext(c)
@@ -87,20 +87,20 @@ func EditVitalByIdController(c *fiber.Ctx) error{
 	id := c.Params("id")
 
 	//----> Get the edited blood-stat payload from the context.
-	if err := c.BodyParser(&vital); err != nil {
+	if err := c.BodyParser(&vitalUpdateRequest); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": err.Error(), "status": "fail"})	
 	}
 
 	//----> Store the user-id in vital.
-	vital.UserID = userAuth.UserId
+	vitalUpdateRequest.UserID = userAuth.UserId
 
 	//----> Update the blood-stat with given id from the database.
-	if err := vital.EditVitalById(id, userAuth); err != nil {
+	if err := vitalUpdateRequest.EditVitalById(id, userAuth); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
 
 	//----> Send back the response.
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Vital has been deleted successfully!", "status": "success"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Vital has been updated successfully!", "status": "success"})
 }
 
 func GetVitalByIdController(c *fiber.Ctx) error {
