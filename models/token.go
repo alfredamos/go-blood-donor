@@ -16,8 +16,7 @@ type Token struct{
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
-	AccessToken string `json:"accessToken" gorm:"unique"`
-	RefreshToken string `json:"refreshToken" gorm:"unique"`
+	AccessToken string `json:"accessToken" gorm:"unique;type:varchar(750)"`
 	TokenType utils.TokenType `json:"tokenType"`
 	Expired bool `json:"expired"`
 	Revoked bool `json:"revoked"`
@@ -30,7 +29,7 @@ func (token *Token) BeforeCreate(_ *gorm.DB) (err error) {
 	return 
 }
 
-func (token *Token) findAllValidTokensByUser(userId string)([]Token, error) {
+func FindAllValidTokensByUser(userId string)([]Token, error) {
 	tokens := new([]Token)
 
 	//----> Get all tokens that match the specified criteria from the database.
@@ -42,7 +41,7 @@ func (token *Token) findAllValidTokensByUser(userId string)([]Token, error) {
 	return *tokens, nil
 }
 
-func (t *Token) getTokenByAccessToken(accessToken string)(Token, error){
+func GetTokenByAccessToken(accessToken string)(Token, error){
 	token := new(Token)
 
 	//----> Retrieve the blood stat.
@@ -52,4 +51,52 @@ func (t *Token) getTokenByAccessToken(accessToken string)(Token, error){
 
 	//----> Send back the results.
 	return *token, nil
+}
+
+func (t *Token) DeleteTokensByUserId(userId string) error{
+	tokens := new(Token)
+
+	//----> Get all tokens.
+	if err := initializers.DB.Find(&tokens, Token{UserID: userId}).Error; err != nil {
+		return errors.New("tokens cannot be retrieve from database")
+	}
+
+	//----> Delete tokens for a particular user by his/her id.
+	if err := initializers.DB.Where(&Token{UserID: userId}).Find(&Token{}).Error; err != nil{
+		return errors.New("error deleting tokens")
+	}
+
+	//----> send back response.
+	return nil
+}
+
+func (t *Token) DeleteAllTokens() error{
+	tokens := []Token{}
+
+	//----> Get all tokens.
+	if err := initializers.DB.Find(&tokens).Error; err != nil {
+		return errors.New("tokens cannot be retrieve from database")
+	}
+
+	tokenIds := getAllTokensId(tokens)
+
+	//----> Delete all tokens.
+	if err := initializers.DB.Delete(tokenIds).Error; err != nil {
+		return errors.New("error deleting tokens")
+	}
+
+	//----> send back response.
+	return nil
+}
+
+func getAllTokensId(tokens []Token) []Token {
+	tokenIds := make([]Token,0) 
+
+	//----> Get all the token ids.
+	for _, token := range tokens {
+		tokenIds = append(tokenIds, Token{ID: token.ID})
+	}
+
+	//----> Send back the results.
+	return tokenIds
 }

@@ -2,9 +2,10 @@ package models
 
 import (
 	"errors"
-	"go-donor-list-backend/utils"
+	"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/middlewares"
+	"go-donor-list-backend/utils"
 	_ "net/http"
 	"time"
 
@@ -108,6 +109,7 @@ func (req *LoginRequest) Login() (string, error) {
 	password := req.Password
 
 	user := new(User)
+	newToken := new(Token)
 
 	//----> Check for existence of user.
 	if err := initializers.DB.Where("email = ?", email).First(&user).Error; err != nil {
@@ -119,9 +121,25 @@ func (req *LoginRequest) Login() (string, error) {
 		return "", errors.New("invalid credentials ")
 	}
 
+	//----> Revoke tokens.
+	
+	if err := revokeAllUserTokens(*user); err != nil {
+		return "", errors.New(err.Error())
+	}
+
 	//----> Generate token.
 	token, err := middlewares.GenerateToken(user.Name, user.Email, user.ID, string(user.Role))
 
+	//----> Store the token in the database.
+	newToken.AccessToken = token
+	newToken.Expired = false
+	newToken.Revoked = false
+	newToken.UserID = user.ID
+	newToken.TokenType = utils.TokenType(utils.Bearer)
+
+	if err := initializers.DB.Create(&newToken).Error; err != nil {
+		return "", errors.New("error saving token in the database")
+	}
 	//----> Check for error.
 	if err != nil {
 		return "", errors.New("expired or invalid credentials")
@@ -129,6 +147,28 @@ func (req *LoginRequest) Login() (string, error) {
 
 	//----> Send back the response.
 	return token, nil
+}
+
+func Logout(accessToken string) error{
+	//----> Get the current valid token.
+  validToken, err := GetTokenByAccessToken(accessToken)
+
+	//---> Invalidate token.
+	validToken.Expired = true
+	validToken.Revoked = true
+
+	//----> Save the updated token in the database.
+	if err := initializers.DB.Save(validToken).Error; err != nil {
+		return errors.New("error updating token")
+	}
+
+	//----> Check for error.
+	if err != nil {
+		return errors.New("error fetching token")
+	}
+
+	//----> Send back the response.
+	return nil
 }
 
 type SignupRequest struct {
@@ -236,4 +276,47 @@ func calculateAge(dateOfBirth time.Time)int {
 	}
 
 	return exactAge - 1
+}
+
+func revokeAllUserTokens(user User) error{
+	tokens := make([]Token,0)
+	//----> Fetch all valid tokens.
+	validTokens, err := FindAllValidTokensByUser(user.ID)
+	
+	//----> Check for empty slice.
+	if len(validTokens) == 0 {
+		return nil
+	}
+	//----> Check for error.
+	if err != nil {
+		return errors.New("error fetching tokens")
+	}
+
+	//----> Revoke tokens.
+	for _, token := range validTokens{
+		token.Expired = true //----> Token has expired.
+		token.Revoked = true //----> Token has been revoked.
+
+		//----> Make new token.
+		newToken := makeToken(user.ID, token)
+
+		tokens = append(tokens, newToken)
+	}
+
+	//----> Store the updated tokens in the database.
+	if err := initializers.DB.Model(&tokens).Updates(tokens).Error; err != nil {
+		return errors.New("error revoking tokens")
+	}
+	//----> Send back the response.
+	return nil
+}
+
+func makeToken(userId string, token Token)Token{
+	return Token {ID: token.ID,
+			AccessToken: token.AccessToken,
+			Revoked: true,
+			Expired: true,
+			TokenType: utils.TokenType(token.TokenType),
+			UserID: userId,
+	}
 }

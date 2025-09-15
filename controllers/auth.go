@@ -87,6 +87,11 @@ func LoginController(c *fiber.Ctx) error {
 }
 
 func LogoutController(c *fiber.Ctx) error {
+	//----> Fetch the access token.
+	accessToken := middlewares.GetCookieHandler(c)
+	//----> Invalidate the token in the database.
+	models.Logout(accessToken)
+
 	//----> Remove the cookie.
 	middlewares.DeleteCookieHandler(c)
 
