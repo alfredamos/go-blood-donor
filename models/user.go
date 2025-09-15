@@ -26,6 +26,7 @@ type User struct {
 	DateOfBirth  time.Time      `json:"dateOfBirth" binding:"required"`
 	Age          int            `json:"age"`
 	Role         utils.Role     `json:"role" gorm:"default:'Customer'"`
+	Tokens       []Token        `json:"tokens" gorm:"foreignKey:UserID"`
 	Vitals       []Vital        `json:"vitals" gorm:"foreignKey:UserID"`
 	DonorDetails []DonorDetail  `json:"donorDetails" gorm:"foreignKey:UserID"`
 	BloodStat    BloodStat      `json:"bloodStat" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`

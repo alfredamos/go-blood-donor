@@ -15,7 +15,7 @@ func init() {
 
 func main() {
 	//----> Migrate the gorm models into mysql database.
-	err := initializers.DB.AutoMigrate(&models.User{}, &models.BloodStat{}, &models.DonorDetail{}, &models.Vital{})
+	err := initializers.DB.AutoMigrate(&models.User{}, &models.BloodStat{}, &models.DonorDetail{}, &models.Vital{}, &models.Token{})
 	if err != nil {
 		return
 	}
