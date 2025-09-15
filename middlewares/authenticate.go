@@ -10,9 +10,39 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func GenerateToken(name string, email string, userId string, role string) (string, error) {
+func GenerateAccessToken(name, email, userId, role string)(string, error){
+	expireTime := time.Now().Add(time.Minute * 15).Unix()
+
+	//----> Generate access-token
+	accessToken, err := generateToken(name, email, userId, role, expireTime)
+
+	//----> Check for error.
+	if err != nil {
+		return "", errors.New("error generating access-token")
+	}
+
+	//----> send back the result.
+	return accessToken, nil
+}
+
+func GenerateRefreshToken(name, email, userId, role string)(string, error){
+	expireTime := time.Now().Add(time.Hour * 24 * 7).Unix()
+
+	//----> Generate access-token
+	accessToken, err := generateToken(name, email, userId, role, expireTime)
+
+	//----> Check for error.
+	if err != nil {
+		return "", errors.New("error generating access-token")
+	}
+
+	//----> send back the result.
+	return accessToken, nil
+}
+
+func generateToken(name string, email string, userId string, role string, expireAt int64) (string, error) {
 	secretKey := os.Getenv("JWT_TOKEN_SECRET")
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"name": name, "email": email, "userId": userId, "role": role, "expiresAt": time.Now().Add(time.Hour * 2).Unix()})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"name": name, "email": email, "userId": userId, "role": role, "expiresAt": expireAt})
 	return token.SignedString([]byte(secretKey))
 }
 

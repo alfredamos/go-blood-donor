@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/utils"
