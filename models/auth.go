@@ -103,7 +103,7 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func (req *LoginRequest) Login() (string, error) {
+func (req *LoginRequest) Login() (string, string, error) {
 	email := req.Email
 	password := req.Password
 
@@ -112,40 +112,53 @@ func (req *LoginRequest) Login() (string, error) {
 
 	//----> Check for existence of user.
 	if err := initializers.DB.Where("email = ?", email).First(&user).Error; err != nil {
-		return "", errors.New("invalid credentials ")
+		return "", "", errors.New("invalid credentials ")
 	}
 
 	//----> Check for match between oldPassword and the one in the database.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", errors.New("invalid credentials ")
+		return "", "", errors.New("invalid credentials ")
 	}
 
 	//----> Revoke tokens.
 	
-	if err := revokeAllUserTokens(*user); err != nil {
-		return "", errors.New(err.Error())
+	if err := revokeAllUserTokens(*&user.ID); err != nil {
+		return "", "", errors.New(err.Error())
 	}
 
-	//----> Generate token.
-	token, err := middlewares.GenerateToken(user.Name, user.Email, user.ID, string(user.Role))
+	//----> Generate access token.
+	accessToken, err := middlewares.GenerateAccessToken(user.Name, user.Email, user.ID, string(user.Role))
 
+	//----> Check for error in generating.
+	if err != nil {
+		return "", "", errors.New("error generating access-token")
+	}
+
+	//----> Generate refresh-token
+	refreshToken, err := middlewares.GenerateRefreshToken(user.Name, user.Email, user.ID, string(user.Role))
+
+	//----> Check for error in generating refresh token.
+	if err != nil {
+		return "", "", errors.New("error generating refresh-token")		
+	}
 	//----> Store the token in the database.
-	newToken.AccessToken = token
+	newToken.AccessToken = accessToken
+	newToken.RefreshToken = refreshToken
 	newToken.Expired = false
 	newToken.Revoked = false
 	newToken.UserID = user.ID
 	newToken.TokenType = utils.TokenType(utils.Bearer)
 
 	if err := initializers.DB.Create(&newToken).Error; err != nil {
-		return "", errors.New("error saving token in the database")
+		return "", "", errors.New("error saving token in the database")
 	}
-	//----> Check for error.
-	if err != nil {
-		return "", errors.New("expired or invalid credentials")
-	}
+	// //----> Check for error.
+	// if err != nil {
+	// 	return "", errors.New("expired or invalid credentials")
+	// }
 
 	//----> Send back the response.
-	return token, nil
+	return accessToken, refreshToken, nil
 }
 
 func Logout(accessToken string) error{
@@ -249,6 +262,30 @@ func signupRequestToUser(req *SignupRequest, hashedPassword string) User {
 	}
 }
 
+func RefreshToken(userId string) error {
+	//----> Get all valid tokens.
+	validTokens, err := FindAllValidTokensByUser(userId)
+
+	//----> Get the first token.
+	validToken := validTokens[0]
+
+	//---> Check token status.
+  if validToken.Revoked && validToken.Expired{
+    return errors.New("invalid or expired token");
+  }
+
+	//----> Revoke all tokens.
+	if err := revokeAllUserTokens(userId); err != nil {
+		return errors.New("error in revoking token")
+	}
+
+	//----> Check for errors.
+	if err != nil {
+		return errors.New("tokens cannot be retrieved from database")
+	}
+	return nil
+}
+
 func editProfileRequestToUser(req *EditProfileRequest) User {
 	return User{
 		Address:     req.Address,
@@ -277,10 +314,10 @@ func calculateAge(dateOfBirth time.Time)int {
 	return exactAge - 1
 }
 
-func revokeAllUserTokens(user User) error{
+func revokeAllUserTokens(userId string) error{
 	tokens := make([]Token,0)
 	//----> Fetch all valid tokens.
-	validTokens, err := FindAllValidTokensByUser(user.ID)
+	validTokens, err := FindAllValidTokensByUser(userId)
 	
 	//----> Check for empty slice.
 	if len(validTokens) == 0 {
@@ -297,7 +334,7 @@ func revokeAllUserTokens(user User) error{
 		token.Revoked = true //----> Token has been revoked.
 
 		//----> Make new token.
-		newToken := makeToken(user.ID, token)
+		newToken := makeToken(userId, token)
 
 		tokens = append(tokens, newToken)
 	}
@@ -313,6 +350,7 @@ func revokeAllUserTokens(user User) error{
 func makeToken(userId string, token Token)Token{
 	return Token {ID: token.ID,
 			AccessToken: token.AccessToken,
+			RefreshToken: token.RefreshToken,
 			Revoked: true,
 			Expired: true,
 			TokenType: utils.TokenType(token.TokenType),

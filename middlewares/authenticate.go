@@ -46,12 +46,13 @@ func generateToken(name string, email string, userId string, role string, expire
 	return token.SignedString([]byte(secretKey))
 }
 
-func VerifyTokenJwt(c *fiber.Ctx) error {
+func VerifyTokenJwt(c *fiber.Ctx, tokenName string) error {
 	//----> Get token from cookie.
-	token := GetCookieHandler(c)
+	token := GetCookieHandler(c, tokenName)
 
 	//----> Validate token.
 	parsedToken, err := validateToken(token)
+	
 
 	//----> Check for error.
 	if err != nil {
@@ -68,12 +69,14 @@ func VerifyTokenJwt(c *fiber.Ctx) error {
 }
 
 func getUserClaims(c *fiber.Ctx, parsedToken jToken) error {
+	
 	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 		//----> Access claims
 		name := claims["name"].(string)
 		email := claims["email"].(string)
 		role := claims["role"].(string)
 		userId := claims["userId"]
+		expiresAt := claims["expiresAt"]
 
 		//----> Set the claims on gin context
 		c.Locals("name", name)
@@ -84,6 +87,10 @@ func getUserClaims(c *fiber.Ctx, parsedToken jToken) error {
 
 		c.Locals("role", role)
 		c.Set("role", role)
+
+		//----> Set expires at on local
+		c.Locals("expiresAt", expiresAt)
+		//c.Set("expiresAt", expiresAt.(int64))
 
 		//----> Convert user-id to string
 		c.Locals("userId", userId)

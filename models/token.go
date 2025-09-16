@@ -17,6 +17,7 @@ type Token struct{
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 	AccessToken string `json:"accessToken" gorm:"unique;type:varchar(750)"`
+	RefreshToken string `json:"refreshToken" gorm:"unique;type:varchar(750)"`
 	TokenType utils.TokenType `json:"tokenType"`
 	Expired bool `json:"expired"`
 	Revoked bool `json:"revoked"`

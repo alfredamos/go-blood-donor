@@ -37,3 +37,15 @@ func GetUserIdFromContext(c *fiber.Ctx) string {
 	//----> Send back the user-id.
 	return fmt.Sprintf("%v", userId)
 }
+
+func IsValid(token string)bool{
+	parsedToken, err := validateToken(token)
+
+	//----> Check for errors.
+	if err != nil {
+		return false
+	}
+
+	//---> Send back the results.
+	return parsedToken.Valid
+}

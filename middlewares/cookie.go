@@ -6,11 +6,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetCookieHandler(c *fiber.Ctx, token string) {
+func SetCookieHandler(c *fiber.Ctx, tokenPath,tokenName, tokenValue string) {
 	c.Cookie(&fiber.Cookie{
-		Name:     "token",
-		Value:    token,
-		Path:     "/",
+		Name:     tokenName,
+		Value:    tokenValue,
+		Path:     tokenPath,
 		Domain:   "localhost",
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
@@ -19,13 +19,13 @@ func SetCookieHandler(c *fiber.Ctx, token string) {
 
 }
 
-func GetCookieHandler(c *fiber.Ctx) string {
-	return c.Cookies("token")
+func GetCookieHandler(c *fiber.Ctx, tokenName string) string {
+	return c.Cookies(tokenName)
 }
 
-func DeleteCookieHandler(c *fiber.Ctx) {
+func DeleteCookieHandler(c *fiber.Ctx, tokenName string) {
 	c.Cookie(&fiber.Cookie{
-		Name:     "token",
+		Name:     tokenName,
 		Value:    "",                               // Clear the value
 		Expires:  time.Now().Add(-3 * time.Second), // Set an expired time for older browsers (optional but recommended)
 		MaxAge:   -1,                               // Set MaxAge to a negative value to delete the cookie immediately
