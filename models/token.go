@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"fmt"
+	//"fmt"
 	"go-donor-list-backend/initializers"
 	"go-donor-list-backend/utils"
 	"time"
@@ -10,6 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
+type Status string
+
+const (
+	Valid Status = "Valid"
+	Invalid Status = "Invalid"
+)
+
+type QueryConditions struct{
+	Status Status
+	UserID string
+}
 
 type Token struct{
 	ID           string `gorm:"primaryKey;type:varchar(255)" json:"id"`
@@ -21,6 +34,7 @@ type Token struct{
 	TokenType utils.TokenType `json:"tokenType"`
 	Expired bool `json:"expired"`
 	Revoked bool `json:"revoked"`
+	Status Status `json:"status"`
 	UserID      string         `json:"userId"`
 }
 
@@ -31,15 +45,17 @@ func (token *Token) BeforeCreate(_ *gorm.DB) (err error) {
 }
 
 func FindAllValidTokensByUser(userId string)([]Token, error) {
-	tokens := new([]Token)
+	var tokens  []Token
 
 	//----> Get all tokens that match the specified criteria from the database.
-	if err := initializers.DB.Find(&tokens, Token{UserID: userId, Expired: false, Revoked: false}); err != nil {
+	queryConditions := QueryConditions{UserID: userId, Status: Valid}
+	
+	if err := initializers.DB.Where(&queryConditions).Find(&tokens).Error; err != nil {
 		return []Token{}, errors.New("tokens that match specified criteria are not available")
 	}
 
 	//----> Send back the results.
-	return *tokens, nil
+	return tokens, nil
 }
 
 func GetTokenByAccessToken(accessToken string)(Token, error){
@@ -51,6 +67,7 @@ func GetTokenByAccessToken(accessToken string)(Token, error){
 	}
 
 	//----> Send back the results.
+	fmt.Println("In get-token, token : ", token)
 	return *token, nil
 }
 

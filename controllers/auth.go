@@ -4,23 +4,11 @@ import (
 	"errors"
 	"go-donor-list-backend/middlewares"
 	"go-donor-list-backend/models"
+	"go-donor-list-backend/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type TokenName string
-
-const (
-	AccessToken TokenName = "accessToken"
-	RefreshToken TokenName = "refreshToken"
-)
-
-type TokenPath string
-
-const (
-	AccessTokenPath TokenPath = "/"
-	RefreshTokenPath TokenPath = "/api/auth/refresh"
-)
 
 func ChangePasswordController(c *fiber.Ctx) error {
 	changePassword := new(models.ChangePasswordRequest)
@@ -95,8 +83,8 @@ func LoginController(c *fiber.Ctx) error {
 	}
 
 	//----> Store both access-token and refresh-token in the cookie.
-	middlewares.SetCookieHandler(c, string(AccessTokenPath), string(AccessToken), accessToken)
-	middlewares.SetCookieHandler(c, string(RefreshTokenPath), string(RefreshToken), refreshToken)
+	middlewares.SetCookieHandler(c, string(utils.AccessTokenPath), string(utils.AccessToken), accessToken)
+	middlewares.SetCookieHandler(c, string(utils.RefreshTokenPath), string(utils.RefreshToken), refreshToken)
 
 	//----> Send back the response.
 	return c.Status(fiber.StatusOK).JSON(accessToken)
@@ -107,9 +95,17 @@ func LogoutController(c *fiber.Ctx) error {
 	//----> Fetch the access token.
 	accessToken := middlewares.GetCookieHandler(c, "accessToken")
 	
-	//----> Check token validity.
-	if isValid := middlewares.IsValid(accessToken); !isValid{
-		return errors.New("Invalid or expired token")
+	//---> Validate token
+	isValid, err := middlewares.IsValid(c, accessToken)
+	
+	//----> Check for error.
+	if err != nil{
+		return errors.New("error validating token")
+	}
+	
+	//----> Check for valid token
+	if !isValid{
+		return errors.New("invalid or expired token")
 	}
 
 	//----> Invalidate the token in the database.
@@ -124,19 +120,35 @@ func LogoutController(c *fiber.Ctx) error {
 
 func RefreshTokenController(c *fiber.Ctx)error{
 	//----> Get refreshToken.
-	refreshToken := middlewares.GetCookieHandler(c, string(RefreshToken))
-
+	refreshToken := middlewares.GetCookieHandler(c, string(utils.RefreshToken))
+	
 	//---> Validate token
-	if isValid := middlewares.IsValid(refreshToken); !isValid{
+	isValid, err := middlewares.IsValid(c, refreshToken)
+	
+	//----> Check for error.
+	if err != nil{
+		return errors.New("error validating token")
+	}
+
+	//----> Check for valid token
+	if !isValid{
 		return errors.New("invalid or expired token")
 	}
 
 	//----> Get the user.
-	userAuth := middlewares.GetUserAuthFromContext(c)
 
-	if err := models.RefreshToken(userAuth.UserId); err != nil {
+	userDetail := middlewares.GetUser_Id_Email_Name_Role(c)
+	
+	newAccessToken, newRefreshToken, err := models.RefreshToken(userDetail)
+	
+	//----> Check for error.
+	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": err.Error(), "status": "fail"})
 	}
+
+	//----> Set the access-token and refresh-token on context cookies.
+	middlewares.SetCookieHandler(c, string(utils.AccessTokenPath),string(utils.AccessToken), newAccessToken)
+	middlewares.SetCookieHandler(c, string(utils.RefreshTokenPath), string(utils.RefreshToken), newRefreshToken)
 
 	//----> Send back response.
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "token has been refreshed successfully"})

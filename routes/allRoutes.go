@@ -2,7 +2,6 @@ package routes
 
 import (
 	"go-donor-list-backend/middlewares"
-
 	"github.com/gofiber/fiber/v2"
 )
 

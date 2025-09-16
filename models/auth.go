@@ -122,7 +122,7 @@ func (req *LoginRequest) Login() (string, string, error) {
 
 	//----> Revoke tokens.
 	
-	if err := revokeAllUserTokens(*&user.ID); err != nil {
+	if err := revokeAllUserTokens(user.ID); err != nil {
 		return "", "", errors.New(err.Error())
 	}
 
@@ -146,16 +146,13 @@ func (req *LoginRequest) Login() (string, string, error) {
 	newToken.RefreshToken = refreshToken
 	newToken.Expired = false
 	newToken.Revoked = false
+	newToken.Status = Valid
 	newToken.UserID = user.ID
-	newToken.TokenType = utils.TokenType(utils.Bearer)
+	newToken.TokenType = utils.Bearer
 
 	if err := initializers.DB.Create(&newToken).Error; err != nil {
 		return "", "", errors.New("error saving token in the database")
 	}
-	// //----> Check for error.
-	// if err != nil {
-	// 	return "", errors.New("expired or invalid credentials")
-	// }
 
 	//----> Send back the response.
 	return accessToken, refreshToken, nil
@@ -168,6 +165,7 @@ func Logout(accessToken string) error{
 	//---> Invalidate token.
 	validToken.Expired = true
 	validToken.Revoked = true
+	validToken.Status = Invalid
 
 	//----> Save the updated token in the database.
 	if err := initializers.DB.Save(validToken).Error; err != nil {
@@ -262,28 +260,60 @@ func signupRequestToUser(req *SignupRequest, hashedPassword string) User {
 	}
 }
 
-func RefreshToken(userId string) error {
+func RefreshToken(userDetail utils.UserDetail)(string, string, error) {
+	editedToken := new(Token)
+	
 	//----> Get all valid tokens.
-	validTokens, err := FindAllValidTokensByUser(userId)
+	validTokens, err := FindAllValidTokensByUser(userDetail.UserId)
+	
+	//----> Check for error.
+	if err != nil {
+		return "", "", errors.New("error retrieving valid tokens");
+	}
 
 	//----> Get the first token.
 	validToken := validTokens[0]
 
 	//---> Check token status.
   if validToken.Revoked && validToken.Expired{
-    return errors.New("invalid or expired token");
+    return "", "", errors.New("invalid or expired token");
   }
 
 	//----> Revoke all tokens.
-	if err := revokeAllUserTokens(userId); err != nil {
-		return errors.New("error in revoking token")
+	if err := revokeAllUserTokens(userDetail.UserId); err != nil {
+		return "", "", errors.New("error in revoking token")
 	}
 
-	//----> Check for errors.
+	//----> Generate access token.
+	accessToken, err := middlewares.GenerateAccessToken(userDetail.Name, userDetail.Email, userDetail.UserId, string(userDetail.Role))
+
+	//----> Check for error in generating.
 	if err != nil {
-		return errors.New("tokens cannot be retrieved from database")
+		return "", "", errors.New("error generating access-token")
 	}
-	return nil
+
+	//----> Generate refresh-token
+	refreshToken, err := middlewares.GenerateRefreshToken(userDetail.Name, userDetail.Email, userDetail.UserId, string(userDetail.Role))
+
+	//----> Check for error in generating refresh token.
+	if err != nil {
+		return "", "", errors.New("error generating refresh-token")		
+	}
+	//----> Store the token in the database.
+	editedToken.AccessToken = accessToken
+	editedToken.RefreshToken = refreshToken
+	editedToken.Expired = false
+	editedToken.Revoked = false
+	editedToken.Status = Valid
+	editedToken.UserID = userDetail.UserId
+	editedToken.TokenType = utils.Bearer
+
+	if err := initializers.DB.Save(&editedToken).Error; err != nil {
+		return "", "", errors.New("error saving token in the database")
+	} 
+
+	//----> send back response.
+	return accessToken, refreshToken, nil
 }
 
 func editProfileRequestToUser(req *EditProfileRequest) User {
@@ -316,6 +346,7 @@ func calculateAge(dateOfBirth time.Time)int {
 
 func revokeAllUserTokens(userId string) error{
 	tokens := make([]Token,0)
+
 	//----> Fetch all valid tokens.
 	validTokens, err := FindAllValidTokensByUser(userId)
 	
@@ -323,15 +354,30 @@ func revokeAllUserTokens(userId string) error{
 	if len(validTokens) == 0 {
 		return nil
 	}
+
 	//----> Check for error.
 	if err != nil {
 		return errors.New("error fetching tokens")
 	}
 
-	//----> Revoke tokens.
+	//----> Collect tokens to revoke in a slice with expired and revoked as true.
+	tokens = tokensToRevoke(userId, validTokens)
+
+	//----> Store the updated tokens in the database.
+	if err := saveAll(tokens); err != nil {
+		return errors.New("error revoking tokens")
+	}
+	//----> Send back the response.
+	return nil
+}
+
+func tokensToRevoke(userId string, validTokens []Token)[]Token{
+	tokens := make([]Token, 0)
+
 	for _, token := range validTokens{
 		token.Expired = true //----> Token has expired.
 		token.Revoked = true //----> Token has been revoked.
+		token.Status = Invalid
 
 		//----> Make new token.
 		newToken := makeToken(userId, token)
@@ -339,21 +385,44 @@ func revokeAllUserTokens(userId string) error{
 		tokens = append(tokens, newToken)
 	}
 
-	//----> Store the updated tokens in the database.
-	if err := initializers.DB.Model(&tokens).Updates(tokens).Error; err != nil {
-		return errors.New("error revoking tokens")
-	}
 	//----> Send back the response.
-	return nil
+	return tokens
 }
 
 func makeToken(userId string, token Token)Token{
-	return Token {ID: token.ID,
-			AccessToken: token.AccessToken,
-			RefreshToken: token.RefreshToken,
-			Revoked: true,
-			Expired: true,
-			TokenType: utils.TokenType(token.TokenType),
-			UserID: userId,
+	return Token {
+		ID: token.ID,
+		AccessToken: token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Revoked: token.Revoked,
+		Status: token.Status,
+		Expired: token.Expired,
+		TokenType: token.TokenType,
+		UserID: userId,
 	}
+}
+
+func saveAll(tokens []Token)error{
+	tx := initializers.DB.Begin()
+	if tx.Error != nil {
+		return errors.New("error at the onset of saving all tokens")
+	}
+
+	for _, token := range tokens {
+		err := tx.Model(&Token{}).Where("id = ?", token.ID).Updates(token).Error
+	
+		//----> Check for error
+		if err != nil {
+			tx.Rollback()
+			// Handle error
+			return errors.New("error updating token")
+		}
+	}
+
+	err := tx.Commit().Error
+	if err != nil {
+	// Handle error
+	return errors.New("unable to commit token to database")
+}
+	return nil
 }
