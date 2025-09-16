@@ -350,7 +350,7 @@ func revokeAllUserTokens(userId string) error{
 	//----> Fetch all valid tokens.
 	validTokens, err := FindAllValidTokensByUser(userId)
 	
-	//----> Check for empty slice.
+	// //----> Check for empty slice.
 	if len(validTokens) == 0 {
 		return nil
 	}
