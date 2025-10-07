@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func publicRoutes(router fiber.Router) {
+func PublicRoutes(router fiber.Router) {
 	//----> Auth-routes.
 	router.Post("/auth/login", controllers.LoginController)
 	router.Post("/auth/signup", controllers.SignupController)

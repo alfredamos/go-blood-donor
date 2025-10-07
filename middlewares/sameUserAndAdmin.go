@@ -1,14 +1,16 @@
 package middlewares
 
 import (
+	"fmt"
 	"net/http"
+
 	"github.com/gofiber/fiber/v2"
 )
 
-func SameUserAndAdmin(c *fiber.Ctx) error{
+func SameUserAndAdminMiddleware(c *fiber.Ctx) error{
 	//----> Get the user-id from param.
 	userIdFromContext := c.Params("userId")
-
+	fmt.Println("In same-user-and-admin, c : ", c)
 	//----> Get user role from context.
 	userAuth := GetUserAuthFromContext(c)
 

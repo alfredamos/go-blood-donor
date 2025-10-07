@@ -46,7 +46,7 @@ func generateToken(name string, email string, userId string, role string, expire
 	return token.SignedString([]byte(secretKey))
 }
 
-func VerifyTokenJwt(c *fiber.Ctx) error {
+func VerifyTokenJwtMiddleware(c *fiber.Ctx) error {
 	//----> Get token from cookie.
 	token := GetCookieHandler(c, "accessToken")
 

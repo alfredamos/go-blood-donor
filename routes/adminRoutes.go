@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func adminRoutes(router fiber.Router) {
+func AdminRoutes(router fiber.Router) {
 	//----> Blood-stat routes.
 	router.Get("/blood-stats", controllers.GetAllBloodStatsController)
 	router.Delete("/blood-stats/all/delete-all", controllers.DeleteAllBloodStatController)

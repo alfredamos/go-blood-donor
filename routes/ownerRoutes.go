@@ -2,14 +2,15 @@ package routes
 
 import (
 	"go-donor-list-backend/controllers"
+	"go-donor-list-backend/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func ownerRoutes(router fiber.Router){
+func OwnerRoutes(router fiber.Router){
 	//----> Blood-stats routes.
-	router.Get("/blood-stats/get-by-user-id/:userId", controllers.GetBloodStatByUserIdController)
-	router.Delete("/blood-stats/delete-by-user-id/:userId", controllers.DeleteBloodStatByUserIdController)
+	router.Get("/blood-stats/get-by-user-id/:userId", middlewares.SameUserAndAdminMiddleware, controllers.GetBloodStatByUserIdController)
+	router.Delete("/blood-stats/delete-by-user-id/:userId", middlewares.SameUserAndAdminMiddleware, controllers.DeleteBloodStatByUserIdController)
 	
 	
 	//----> Donor-details routes.

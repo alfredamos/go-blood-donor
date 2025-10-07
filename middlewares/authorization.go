@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm/utils"
 )
 
-func RolePermission(roles ...string) fiber.Handler {
+func RolePermissionMiddleware(roles ...string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		//----> Get user role from context.
 		userAuth := GetUserAuthFromContext(c)
