@@ -159,8 +159,10 @@ func (req *LoginRequest) Login() (string, string, error) {
 }
 
 func Logout(accessToken string) error{
+	token := new(Token)
+	token.AccessToken = accessToken
 	//----> Get the current valid token.
-  validToken, err := GetTokenByAccessToken(accessToken)
+  validToken, err := token.FindTokenByAccessToken()
 
 	//---> Invalidate token.
 	validToken.Expired = true
@@ -264,7 +266,7 @@ func RefreshToken(userDetail utils.UserDetail)(string, string, error) {
 	editedToken := new(Token)
 	
 	//----> Get all valid tokens.
-	validTokens, err := FindAllValidTokensByUser(userDetail.UserId)
+	validTokens, err := editedToken.FindAllValidTokensByUserId(userDetail.UserId)
 	
 	//----> Check for error.
 	if err != nil {
@@ -346,9 +348,10 @@ func calculateAge(dateOfBirth time.Time)int {
 
 func revokeAllUserTokens(userId string) error{
 	tokens := make([]Token,0)
+	token := new(Token)
 
 	//----> Fetch all valid tokens.
-	validTokens, err := FindAllValidTokensByUser(userId)
+	validTokens, err := token.FindAllValidTokensByUserId(userId)
 	
 	// //----> Check for empty slice.
 	if len(validTokens) == 0 {
@@ -402,27 +405,3 @@ func makeToken(userId string, token Token)Token{
 	}
 }
 
-func saveAll(tokens []Token)error{
-	tx := initializers.DB.Begin()
-	if tx.Error != nil {
-		return errors.New("error at the onset of saving all tokens")
-	}
-
-	for _, token := range tokens {
-		err := tx.Model(&Token{}).Where("id = ?", token.ID).Updates(token).Error
-	
-		//----> Check for error
-		if err != nil {
-			tx.Rollback()
-			// Handle error
-			return errors.New("error updating token")
-		}
-	}
-
-	err := tx.Commit().Error
-	if err != nil {
-	// Handle error
-	return errors.New("unable to commit token to database")
-}
-	return nil
-}
